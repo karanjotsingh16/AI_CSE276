@@ -1,0 +1,61 @@
+{
+  "model_id": "pairwise_linear_ranker_v1_synthetic_demo",
+  "model_type": "Pairwise LogisticRegression (antisymmetric difference ranker, fit_intercept=False)",
+  "status": "experimental_synthetic_benchmark_only",
+  "is_synthetic_benchmark": true,
+  "used_for_primary_recommendation": false,
+  "provenance_note": "Evaluated on query-grouped synthetic multi-criteria mountain corridor benchmark scenarios (data_source='synthetic_simulation_benchmark'). Validates feature extraction, GroupShuffleSplit zero-leakage partitioning, and NDCG/pairwise metrics. Do NOT claim real-world generalization without observed fleet telemetry labels.",
+  "split_verification": {
+    "splitting_strategy": "GroupShuffleSplit by spatial_group_id (60% train / 20% val / 20% test)",
+    "train_queries": 108,
+    "validation_queries": 36,
+    "test_queries": 36,
+    "train_pairs": 648,
+    "validation_pairs": 216,
+    "test_pairs": 216,
+    "zero_group_overlap_verified": true
+  },
+  "pairwise_accuracy_by_split": {
+    "train": 0.9599,
+    "validation": 0.9815,
+    "test": 0.9815
+  },
+  "held_out_test_comparison": {
+    "shortest_distance_heuristic": {
+      "pairwise_accuracy": 0.2685,
+      "top1_recommendation_agreement": 0.1389,
+      "ndcg_at_2": 0.483,
+      "ndcg_at_3": 0.737
+    },
+    "fastest_time_heuristic": {
+      "pairwise_accuracy": 0.7963,
+      "top1_recommendation_agreement": 0.7778,
+      "ndcg_at_2": 0.8724,
+      "ndcg_at_3": 0.9415
+    },
+    "deterministic_multi_criteria_baseline": {
+      "pairwise_accuracy": 0.8333,
+      "top1_recommendation_agreement": 0.7222,
+      "ndcg_at_2": 0.937,
+      "ndcg_at_3": 0.9646
+    },
+    "pairwise_logistic_ranker_ml": {
+      "pairwise_accuracy": 0.9815,
+      "top1_recommendation_agreement": 0.9722,
+      "ndcg_at_2": 0.9978,
+      "ndcg_at_3": 0.999
+    }
+  },
+  "learned_feature_weights": {
+    "distance_ratio_to_min": -1.0344,
+    "duration_ratio_to_min": -2.1517,
+    "major_arterial_fraction": 1.1347,
+    "secondary_collector_fraction": -0.3268,
+    "local_road_fraction": -1.3327,
+    "intersection_density_per_km": -0.4236,
+    "bridge_tunnel_fraction": 0.2285,
+    "pref_shortest_x_dist_ratio": -4.1009,
+    "pref_fastest_x_time_ratio": -2.7916,
+    "pref_balanced_x_combined_ratio": -1.093
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "hoshiarpur": [
+    {
+      "place_id": "osm_1948566",
+      "name": "Hoshiarpur, Punjab",
+      "display_name": "Hoshiarpur, Punjab, India",
+      "state": "Punjab",
+      "district": "Hoshiarpur",
+      "lat": 31.609294,
+      "lng": 75.845975,
+      "elevation_m": 1000,
+      "place_type": "administrative",
+      "source": "openstreetmap_nominatim",
+      "description": "OpenStreetMap administrative in Punjab"
+    },
+    {
+      "place_id": "osm_245772064",
+      "name": "Hoshiarpur, Punjab",
+      "display_name": "Hoshiarpur, Hoshiarpur Tahsil, Hoshiarpur, Punjab, 146001, India",
+      "state": "Punjab",
+      "district": "Hoshiarpur",
+      "lat": 31.532852,
+      "lng": 75.902548,
+      "elevation_m": 1000,
+      "place_type": "city",
+      "source": "openstreetmap_nominatim",
+      "description": "OpenStreetMap city in Punjab"
+    }
+  ],
+  "jalandhar": [
+    {
+      "place_id": "osm_1948563",
+      "name": "Jalandhar, Punjab",
+      "display_name": "Jalandhar, Punjab, India",
+      "state": "Punjab",
+      "district": "Jalandhar",
+      "lat": 31.292231,
+      "lng": 75.567888,
+      "elevation_m": 1000,
+      "place_type": "administrative",
+      "source": "openstreetmap_nominatim",
+      "description": "OpenStreetMap administrative in Punjab"
+    },
+    {
+      "place_id": "osm_559844882",
+      "name": "Jalandhar, Punjab",
+      "display_name": "Jalandhar, Jalandhar I Tahsil, Jalandhar, Punjab, 144001, India",
+      "state": "Punjab",
+      "district": "Jalandhar",
+      "lat": 31.332376,
+      "lng": 75.576889,
+      "elevation_m": 1000,
+      "place_type": "city",
+      "source": "openstreetmap_nominatim",
+      "description": "OpenStreetMap city in Punjab"
+    }
+  ]
+}

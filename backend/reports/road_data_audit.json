@@ -1,0 +1,130 @@
+{
+  "region": "Shillong\u2013Sohra region, Meghalaya, India",
+  "source": "OpenStreetMap via OSMnx (Cleaned & Strongly Connected)",
+  "download_method": "Point-based bounding box",
+  "center_latitude": 25.42,
+  "center_longitude": 91.82,
+  "requested_distance_m": 25000,
+  "raw_nodes": 22092,
+  "raw_directed_edges": 54612,
+  "raw_weakly_connected_components": 45,
+  "nodes": 21764,
+  "directed_edges": 53888,
+  "weakly_connected_components": 1,
+  "strongly_connected_components": 1,
+  "bounds": {
+    "min_lat": 25.195198,
+    "max_lat": 25.644707,
+    "min_lng": 91.571629,
+    "max_lng": 92.068831
+  },
+  "median_edge_length_m": 75.71,
+  "median_speed_kph": 20.0,
+  "missing_percent": {
+    "highway": 0.0,
+    "maxspeed": 99.81,
+    "speed_kph": 0.0,
+    "travel_time": 0.0,
+    "length": 0.0
+  },
+  "edge_attributes": [
+    "osmid",
+    "highway",
+    "oneway",
+    "reversed",
+    "length",
+    "geometry",
+    "speed_kph",
+    "travel_time",
+    "ref",
+    "bridge",
+    "lanes",
+    "maxspeed",
+    "name",
+    "junction",
+    "tunnel",
+    "width"
+  ],
+  "max_snap_distance_m": 3000.0,
+  "location_coverage": {
+    "shillong": {
+      "name": "Shillong (HQ Logistics Hub)",
+      "query_lat": 25.5788,
+      "query_lng": 91.8933,
+      "node_id": 3428125750,
+      "node_lat": 25.578748,
+      "node_lng": 91.893307,
+      "snap_distance_m": 5.84,
+      "within_coverage": true
+    },
+    "sohra": {
+      "name": "Sohra / Cherrapunji (Southern Hills)",
+      "query_lat": 25.275,
+      "query_lng": 91.7323,
+      "node_id": 9667317115,
+      "node_lat": 25.275135,
+      "node_lng": 91.732197,
+      "snap_distance_m": 18.25,
+      "within_coverage": true
+    },
+    "mairang": {
+      "name": "Mairang (West Khasi Hills Transit)",
+      "query_lat": 25.5653,
+      "query_lng": 91.6375,
+      "node_id": 13452678371,
+      "node_lat": 25.564366,
+      "node_lng": 91.638187,
+      "snap_distance_m": 124.61,
+      "within_coverage": true
+    },
+    "dawki": {
+      "name": "Dawki (Border River Outpost)",
+      "query_lat": 25.1911,
+      "query_lng": 92.0232,
+      "node_id": 9665652667,
+      "node_lat": 25.200808,
+      "node_lng": 92.003658,
+      "snap_distance_m": 2243.04,
+      "within_coverage": true
+    },
+    "jowai": {
+      "name": "Jowai (Jaintia Hills Sub-Depot)",
+      "query_lat": 25.4475,
+      "query_lng": 92.203,
+      "node_id": 9658062131,
+      "node_lat": 25.426891,
+      "node_lng": 92.068792,
+      "snap_distance_m": 13669.97,
+      "within_coverage": false
+    },
+    "nongpoh": {
+      "name": "Nongpoh (NH-6 Transit Hub)",
+      "query_lat": 25.9037,
+      "query_lng": 91.8803,
+      "node_id": 9662633553,
+      "node_lat": 25.64459,
+      "node_lng": 91.847324,
+      "snap_distance_m": 29000.37,
+      "within_coverage": false
+    },
+    "guwahati": {
+      "name": "Guwahati (Regional Depot)",
+      "query_lat": 26.1445,
+      "query_lng": 91.7362,
+      "node_id": 13472526170,
+      "node_lat": 25.644604,
+      "node_lng": 91.722866,
+      "snap_distance_m": 55601.92,
+      "within_coverage": false
+    }
+  },
+  "validation_route_shillong_to_sohra": {
+    "origin_node": 3428125750,
+    "destination_node": 9667317115,
+    "shortest_path_nodes": 301,
+    "shortest_path_distance_km": 50.53,
+    "fastest_path_nodes": 218,
+    "fastest_path_distance_km": 52.88,
+    "fastest_path_duration_min": 82.7
+  }
+}

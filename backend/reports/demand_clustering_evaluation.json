@@ -1,0 +1,124 @@
+{
+  "module": "backend/demand_clustering.py",
+  "stage": "Step 6.1 \u2014 Standalone K-Means Demand-Zone Clustering",
+  "dataset_path": "D:\\AI and ML Project\\backend\\data\\sample_delivery_demand.csv",
+  "model": "KMeans (scikit-learn)",
+  "n_clusters": 4,
+  "random_state": 42,
+  "dataset_size": 40,
+  "total_demand_units": 11205.0,
+  "data_provenance": {
+    "data_sources": [
+      "synthetic_demo"
+    ],
+    "is_synthetic_demo": true,
+    "provenance_note": "Demonstration dataset generated with a fixed seed (synthetic_demo). Not real-world delivery records or observed disaster demand."
+  },
+  "coordinate_projection": {
+    "input_crs": "EPSG:4326",
+    "clustering_crs": "EPSG:32646",
+    "clustering_units": "metres (UTM Zone 46N easting/northing)",
+    "explanation": "Geographic (latitude, longitude) coordinates are projected to EPSG:32646 (WGS 84 / UTM zone 46N) in metres prior to K-Means fitting so Euclidean distances reflect horizontal metric separation rather than distorted angular degrees.",
+    "limitations": [
+      "Planar Euclidean distance in UTM Zone 46N measures straight-line horizontal separation and does not account for mountain road-network detours, canyon/river barriers, or steep elevation gradients.",
+      "K-Means partitions spatial demand points into convex Voronoi cells and does not predict disaster risk or real-time road accessibility."
+    ]
+  },
+  "evaluation_metrics": {
+    "inertia_m2": 163478847.29,
+    "silhouette_score": 0.868,
+    "davies_bouldin_score": 0.1817,
+    "metrics_omitted_reason": null,
+    "interpretation_note": "Silhouette score ([-1, 1], higher indicates tighter/more separated clusters) and Davies-Bouldin score ([0, inf), lower indicates better separation) are internal unsupervised spatial cohesion metrics computed on projected metric coordinates. They do NOT measure classification accuracy, real-world demand prediction accuracy, or disaster-risk validity."
+  },
+  "cluster_summaries": [
+    {
+      "cluster_id": 0,
+      "center_lat": 25.28556,
+      "center_lng": 91.734511,
+      "center_easting_m": 372590.0,
+      "center_northing_m": 2797169.07,
+      "demand_weighted_center_lat": 25.285581,
+      "demand_weighted_center_lng": 91.734403,
+      "point_count": 10,
+      "total_demand_units": 3516.0,
+      "mean_demand_units": 351.6,
+      "demand_share_pct": 31.38,
+      "demand_weighted_priority_index": 3.1,
+      "priority_breakdown": {
+        "Low": 0,
+        "Normal": 2,
+        "High": 5,
+        "Emergency": 3
+      },
+      "mean_distance_to_center_m": 1477.03,
+      "max_distance_to_center_m": 3395.0
+    },
+    {
+      "cluster_id": 1,
+      "center_lat": 25.559341,
+      "center_lng": 91.642604,
+      "center_easting_m": 363644.09,
+      "center_northing_m": 2827582.04,
+      "demand_weighted_center_lat": 25.55893,
+      "demand_weighted_center_lng": 91.640639,
+      "point_count": 10,
+      "total_demand_units": 1974.0,
+      "mean_demand_units": 197.4,
+      "demand_share_pct": 17.62,
+      "demand_weighted_priority_index": 2.0,
+      "priority_breakdown": {
+        "Low": 3,
+        "Normal": 5,
+        "High": 2,
+        "Emergency": 0
+      },
+      "mean_distance_to_center_m": 1858.76,
+      "max_distance_to_center_m": 2989.04
+    },
+    {
+      "cluster_id": 2,
+      "center_lat": 25.576511,
+      "center_lng": 91.883787,
+      "center_easting_m": 387890.04,
+      "center_northing_m": 2829257.96,
+      "demand_weighted_center_lat": 25.575565,
+      "demand_weighted_center_lng": 91.883063,
+      "point_count": 12,
+      "total_demand_units": 3872.0,
+      "mean_demand_units": 322.67,
+      "demand_share_pct": 34.56,
+      "demand_weighted_priority_index": 3.08,
+      "priority_breakdown": {
+        "Low": 0,
+        "Normal": 3,
+        "High": 6,
+        "Emergency": 3
+      },
+      "mean_distance_to_center_m": 2071.91,
+      "max_distance_to_center_m": 4203.36
+    },
+    {
+      "cluster_id": 3,
+      "center_lat": 25.316453,
+      "center_lng": 91.893789,
+      "center_easting_m": 388655.75,
+      "center_northing_m": 2800448.6,
+      "demand_weighted_center_lat": 25.318322,
+      "demand_weighted_center_lng": 91.895019,
+      "point_count": 8,
+      "total_demand_units": 1843.0,
+      "mean_demand_units": 230.38,
+      "demand_share_pct": 16.45,
+      "demand_weighted_priority_index": 2.53,
+      "priority_breakdown": {
+        "Low": 2,
+        "Normal": 2,
+        "High": 2,
+        "Emergency": 2
+      },
+      "mean_distance_to_center_m": 1830.71,
+      "max_distance_to_center_m": 3607.71
+    }
+  ]
+}

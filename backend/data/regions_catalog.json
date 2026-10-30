@@ -1,0 +1,265 @@
+{
+  "default_region_id": "meghalaya_shillong_sohra",
+  "max_snap_distance_m": 3000.0,
+  "regions": [
+    {
+      "region_id": "meghalaya_shillong_sohra",
+      "name": "East & West Khasi Hills (Shillong–Sohra–Mairang–Dawki)",
+      "state": "Meghalaya",
+      "phase": "Phase 1 — Installed Core Network",
+      "graph_filename": "shillong_roads_clean.graphml",
+      "center_lat": 25.42,
+      "center_lng": 91.82,
+      "download_radius_m": 25000,
+      "network_type": "drive",
+      "custom_filter": null,
+      "bounds": {
+        "min_lat": 25.195198,
+        "max_lat": 25.644707,
+        "min_lng": 91.571629,
+        "max_lng": 92.068831
+      },
+      "key_hubs": [
+        "Shillong",
+        "Sohra (Cherrapunji)",
+        "Mairang",
+        "Pynursla",
+        "Dawki",
+        "Upper Shillong",
+        "Smit",
+        "Mawphlang"
+      ],
+      "description": "High-resolution mountain road network covering the Shillong plateau, Sohra southern escarpment, Mairang highland corridor, and Dawki border approach (21,764 nodes, 53,888 directed edges)."
+    },
+    {
+      "region_id": "meghalaya_jaintia_jowai",
+      "name": "Jaintia Hills NH-6 Corridor (Shillong East–Jowai)",
+      "state": "Meghalaya",
+      "phase": "Phase 1 — Expandable Regional Graph",
+      "graph_filename": "jowai_roads_clean.graphml",
+      "center_lat": 25.49,
+      "center_lng": 92.06,
+      "download_radius_m": 25000,
+      "network_type": "drive",
+      "custom_filter": null,
+      "bounds": {
+        "min_lat": 25.265,
+        "max_lat": 25.715,
+        "min_lng": 91.815,
+        "max_lng": 92.305
+      },
+      "key_hubs": [
+        "Jowai",
+        "Ummulong",
+        "Thadlaskein",
+        "Mawryngkneng"
+      ],
+      "description": "Eastern Meghalaya plateau network linking East Khasi Hills with Jowai and the Jaintia Hills supply junction along NH-6."
+    },
+    {
+      "region_id": "assam_guwahati_nongpoh",
+      "name": "Brahmaputra Valley–Ri-Bhoi Corridor (Guwahati–Byrnihat–Nongpoh)",
+      "state": "Assam",
+      "phase": "Phase 1 — Expandable Regional Graph",
+      "graph_filename": "guwahati_nongpoh_clean.graphml",
+      "center_lat": 26.02,
+      "center_lng": 91.81,
+      "download_radius_m": 28000,
+      "network_type": "drive",
+      "custom_filter": null,
+      "bounds": {
+        "min_lat": 25.765,
+        "max_lat": 26.275,
+        "min_lng": 91.535,
+        "max_lng": 92.085
+      },
+      "key_hubs": [
+        "Guwahati",
+        "Dispur",
+        "Jorabat",
+        "Byrnihat",
+        "Nongpoh"
+      ],
+      "description": "Primary multimodal logistics corridor connecting the Guwahati rail/highway depot across the Assam–Meghalaya border through Byrnihat and Nongpoh on NH-27 and NH-6."
+    },
+    {
+      "region_id": "arunachal_itanagar_naharlagun",
+      "name": "Papum Pare Capital Complex Corridor (Itanagar–Naharlagun–Banderdewa)",
+      "state": "Arunachal Pradesh",
+      "phase": "Phase 1 — NER State Capital Graph",
+      "graph_filename": "itanagar_roads_clean.graphml",
+      "center_lat": 27.095,
+      "center_lng": 93.66,
+      "download_radius_m": 22000,
+      "network_type": "drive",
+      "custom_filter": null,
+      "bounds": {
+        "min_lat": 26.95,
+        "max_lat": 27.24,
+        "min_lng": 93.50,
+        "max_lng": 93.82
+      },
+      "key_hubs": [
+        "Itanagar",
+        "Naharlagun",
+        "Nirjuli",
+        "Banderdewa"
+      ],
+      "description": "Himalayan foothill highway corridor along NH-415 connecting Banderdewa checkgate, Naharlagun railhead, and Itanagar state capital."
+    },
+    {
+      "region_id": "manipur_imphal_valley",
+      "name": "Imphal Valley Central Logistics Network (Imphal–Thoubal–Bishnupur)",
+      "state": "Manipur",
+      "phase": "Phase 1 — NER State Capital Graph",
+      "graph_filename": "imphal_roads_clean.graphml",
+      "center_lat": 24.80,
+      "center_lng": 93.93,
+      "download_radius_m": 24000,
+      "network_type": "drive",
+      "custom_filter": null,
+      "bounds": {
+        "min_lat": 24.58,
+        "max_lat": 25.02,
+        "min_lng": 93.72,
+        "max_lng": 94.14
+      },
+      "key_hubs": [
+        "Imphal",
+        "Thoubal",
+        "Bishnupur",
+        "Kakching"
+      ],
+      "description": "Central Manipur valley road network along NH-2 and NH-37 serving Imphal West, Imphal East, Thoubal, and Bishnupur relief hubs."
+    },
+    {
+      "region_id": "mizoram_aizawl_corridor",
+      "name": "Northern Mizoram Ridge Corridor (Aizawl–Sairang–Zemabawk)",
+      "state": "Mizoram",
+      "phase": "Phase 1 — NER State Capital Graph",
+      "graph_filename": "aizawl_roads_clean.graphml",
+      "center_lat": 23.73,
+      "center_lng": 92.72,
+      "download_radius_m": 22000,
+      "network_type": "drive",
+      "custom_filter": null,
+      "bounds": {
+        "min_lat": 23.55,
+        "max_lat": 23.92,
+        "min_lng": 92.55,
+        "max_lng": 92.90
+      },
+      "key_hubs": [
+        "Aizawl",
+        "Sairang",
+        "Zemabawk",
+        "Seling"
+      ],
+      "description": "Steep mountain ridge network along NH-6 and NH-306 connecting Sairang rail terminal with Aizawl municipal distribution hubs."
+    },
+    {
+      "region_id": "nagaland_kohima_dimapur",
+      "name": "Nagaland Lifeline Corridor (Dimapur–Chümoukedima–Kohima)",
+      "state": "Nagaland",
+      "phase": "Phase 1 — NER State Capital Graph",
+      "graph_filename": "kohima_dimapur_roads_clean.graphml",
+      "center_lat": 25.76,
+      "center_lng": 93.92,
+      "download_radius_m": 30000,
+      "network_type": "drive",
+      "custom_filter": null,
+      "bounds": {
+        "min_lat": 25.55,
+        "max_lat": 25.98,
+        "min_lng": 93.65,
+        "max_lng": 94.22
+      },
+      "key_hubs": [
+        "Kohima",
+        "Dimapur",
+        "Chümoukedima",
+        "Medziphema"
+      ],
+      "description": "Primary NH-29 mountain highway corridor linking Dimapur rail/air logistics depot with Kohima state capital."
+    },
+    {
+      "region_id": "tripura_agartala_corridor",
+      "name": "Western Tripura Plains & Border Hub (Agartala–Jirania–Bishramganj)",
+      "state": "Tripura",
+      "phase": "Phase 1 — NER State Capital Graph",
+      "graph_filename": "agartala_roads_clean.graphml",
+      "center_lat": 23.83,
+      "center_lng": 91.32,
+      "download_radius_m": 22000,
+      "network_type": "drive",
+      "custom_filter": null,
+      "bounds": {
+        "min_lat": 23.63,
+        "max_lat": 24.02,
+        "min_lng": 91.18,
+        "max_lng": 91.50
+      },
+      "key_hubs": [
+        "Agartala",
+        "Jirania",
+        "Bishramganj",
+        "Udaipur"
+      ],
+      "description": "NH-8 multimodal freight and integrated check-post corridor serving Agartala and West Tripura."
+    },
+    {
+      "region_id": "sikkim_gangtok_nh10",
+      "name": "East Sikkim Teesta Valley Lifeline (Gangtok–Ranipool–Singtam–Rangpo)",
+      "state": "Sikkim",
+      "phase": "Phase 1 — NER State Capital Graph",
+      "graph_filename": "gangtok_roads_clean.graphml",
+      "center_lat": 27.28,
+      "center_lng": 88.58,
+      "download_radius_m": 22000,
+      "network_type": "drive",
+      "custom_filter": null,
+      "bounds": {
+        "min_lat": 27.12,
+        "max_lat": 27.44,
+        "min_lng": 88.42,
+        "max_lng": 88.74
+      },
+      "key_hubs": [
+        "Gangtok",
+        "Ranipool",
+        "Singtam",
+        "Rangpo",
+        "Pakyong"
+      ],
+      "description": "NH-10 and NH-717A high-gradient mountain corridor linking Rangpo border gateway, Pakyong airport, and Gangtok."
+    },
+    {
+      "region_id": "ner_guwahati_shillong_sohra_corridor",
+      "name": "Unified Guwahati–Nongpoh–Shillong–Sohra–Jowai Inter-Region Highway Network",
+      "state": "Meghalaya & Assam",
+      "phase": "Phase 1 — Cross-Region Arterial Graph",
+      "graph_filename": "ner_corridor_roads_clean.graphml",
+      "center_lat": 25.71,
+      "center_lng": 91.91,
+      "download_radius_m": 60000,
+      "network_type": "drive",
+      "custom_filter": "[\"highway\"~\"motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link\"]",
+      "bounds": {
+        "min_lat": 25.18,
+        "max_lat": 26.25,
+        "min_lng": 91.55,
+        "max_lng": 92.28
+      },
+      "key_hubs": [
+        "Guwahati",
+        "Nongpoh",
+        "Shillong",
+        "Sohra (Cherrapunji)",
+        "Jowai",
+        "Mairang",
+        "Dawki"
+      ],
+      "description": "Inter-regional arterial and collector road network spanning Guwahati, Nongpoh, Shillong, Sohra, and Jowai to support cross-region logistics routing."
+    }
+  ]
+}
