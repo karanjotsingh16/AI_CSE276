@@ -5,6 +5,7 @@ import math
 from pathlib import Path
 from typing import Any
 
+import joblib
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, ndcg_score
@@ -15,6 +16,7 @@ from route_scoring import RoutePreferenceType, evaluate_candidate_routes
 
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_ML_REPORT_PATH = BASE_DIR / "reports" / "route_ranking_ml_evaluation.json"
+DEFAULT_ML_MODEL_ARTIFACT_PATH = BASE_DIR / "models" / "pairwise_route_ranker_v1.joblib"
 
 FEATURE_NAMES: list[str] = [
     "distance_ratio_to_min",
@@ -27,6 +29,7 @@ FEATURE_NAMES: list[str] = [
     "pref_shortest_x_dist_ratio",
     "pref_fastest_x_time_ratio",
     "pref_balanced_x_combined_ratio",
+    "pref_accessibility_x_hierarchy_penalty",
 ]
 
 
@@ -37,8 +40,9 @@ def extract_route_feature_vector(
     min_duration_min: float,
 ) -> np.ndarray:
     """
-    Extract a 10-dimensional numerical feature vector x_i for candidate route i
-    conditioned on the query's minimum distance, minimum duration, and preference mode.
+    Extract an 11-dimensional numerical feature vector x_i for candidate route i
+    conditioned on the query's minimum distance, minimum duration, and preference mode
+    ('shortest', 'fastest', 'balanced', or 'accessibility').
     """
     ev = candidate_eval.get("evidence", {})
     dist_km = max(0.0, float(ev.get("distance_km", 0.0)))
@@ -61,6 +65,10 @@ def extract_route_feature_vector(
     is_shortest = 1.0 if preference == "shortest" else 0.0
     is_fastest = 1.0 if preference == "fastest" else 0.0
     is_balanced = 1.0 if preference == "balanced" else 0.0
+    is_accessibility = 1.0 if preference == "accessibility" else 0.0
+
+    # Hierarchy penalty for accessibility mode: lower when major arterial share is high
+    hierarchy_penalty = (1.0 - major_frac) + 0.6 * local_frac + 0.25 * time_ratio
 
     return np.array(
         [
@@ -74,6 +82,7 @@ def extract_route_feature_vector(
             is_shortest * dist_ratio,
             is_fastest * time_ratio,
             is_balanced * (0.5 * dist_ratio + 0.5 * time_ratio),
+            is_accessibility * hierarchy_penalty,
         ],
         dtype=np.float64,
     )
@@ -104,12 +113,14 @@ def _synthetic_NonLinear_utility(
     s_dist = 100.0 * (min_distance_km / dist_km)
     s_time = 100.0 * (min_duration_min / dur_min)
     # Non-linear junction complexity & narrow local-road penalty for relief trucks
-    hierarchy_bonus = 12.0 * major_frac - 15.0 * (local_frac ** 1.3) - 0.45 * max(0.0, int_density - 4.0)
+    hierarchy_bonus = 14.0 * major_frac - 16.0 * (local_frac ** 1.3) - 0.45 * max(0.0, int_density - 4.0)
 
     if preference == "shortest":
         base_u = 0.88 * s_dist + 0.08 * s_time + 0.4 * hierarchy_bonus
     elif preference == "fastest":
         base_u = 0.08 * s_dist + 0.88 * s_time + 0.4 * hierarchy_bonus
+    elif preference == "accessibility":
+        base_u = 0.25 * s_dist + 0.35 * s_time + 2.2 * hierarchy_bonus
     else:
         base_u = 0.44 * s_dist + 0.44 * s_time + 1.0 * hierarchy_bonus
 
@@ -123,11 +134,17 @@ def generate_synthetic_benchmark_queries(
 ) -> list[dict[str, Any]]:
     """
     Generate a reproducible set of multi-candidate route queries modeled on realistic
-    mountain highway corridor trade-offs (Shortest vs. Estimated Fastest vs. Balanced Collector).
+    mountain highway corridor trade-offs (Shortest vs. Estimated Fastest vs. Balanced Collector)
+    across all 4 routing preferences ('shortest', 'fastest', 'balanced', 'accessibility').
     Every query is explicitly tagged with `data_source = "synthetic_simulation_benchmark"`.
     """
     rng = np.random.default_rng(random_state)
-    preferences: list[RoutePreferenceType] = ["shortest", "fastest", "balanced"]
+    preferences: list[RoutePreferenceType] = [
+        "shortest",
+        "fastest",
+        "balanced",
+        "accessibility",
+    ]
     queries: list[dict[str, Any]] = []
 
     for corridor_idx in range(n_Corridors):
@@ -379,13 +396,16 @@ class PairwiseRouteRanker:
         val_pair_acc = round(float(accuracy_score(y_val, self.model.predict(X_val_scaled))), 4)
         test_pair_acc = round(float(accuracy_score(y_test, self.model.predict(X_test_scaled))), 4)
 
-        # Evaluate query-level ranking metrics on held-out test set across 4 methods
+        # Evaluate query-level ranking metrics on held-out test set across 5 methods
         comparison = {
             "shortest_distance_heuristic": self._evaluate_ranking_method(
                 test_queries, method="shortest_only"
             ),
             "fastest_time_heuristic": self._evaluate_ranking_method(
                 test_queries, method="fastest_only"
+            ),
+            "road_hierarchy_heuristic": self._evaluate_ranking_method(
+                test_queries, method="hierarchy_only"
             ),
             "deterministic_multi_criteria_baseline": self._evaluate_ranking_method(
                 test_queries, method="deterministic_baseline"
@@ -404,6 +424,7 @@ class PairwiseRouteRanker:
         self.evaluation_summary = {
             "model_id": "pairwise_linear_ranker_v1_synthetic_demo",
             "model_type": "Pairwise LogisticRegression (antisymmetric difference ranker, fit_intercept=False)",
+            "model_artifact_path": str(DEFAULT_ML_MODEL_ARTIFACT_PATH),
             "status": (
                 "experimental_synthetic_benchmark_only"
                 if self.is_synthetic_benchmark
@@ -413,10 +434,13 @@ class PairwiseRouteRanker:
             "used_for_primary_recommendation": False,
             "provenance_note": (
                 "Evaluated on query-grouped synthetic multi-criteria mountain corridor benchmark "
-                "scenarios (data_source='synthetic_simulation_benchmark'). Validates feature extraction, "
+                "scenarios (data_source='synthetic_simulation_benchmark') across all 4 preferences "
+                "('shortest', 'fastest', 'balanced', 'accessibility'). Validates 11-feature extraction, "
                 "GroupShuffleSplit zero-leakage partitioning, and NDCG/pairwise metrics. "
                 "Do NOT claim real-world generalization without observed fleet telemetry labels."
             ),
+            "supported_preferences": ["shortest", "fastest", "balanced", "accessibility"],
+            "feature_names": list(FEATURE_NAMES),
             "split_verification": {
                 "splitting_strategy": "GroupShuffleSplit by spatial_group_id (60% train / 20% val / 20% test)",
                 "train_queries": len(train_queries),
@@ -436,6 +460,62 @@ class PairwiseRouteRanker:
             "learned_feature_weights": coef_weights,
         }
         return self.evaluation_summary
+
+    def save_model_artifact(
+        self,
+        artifact_path: str | Path = DEFAULT_ML_MODEL_ARTIFACT_PATH,
+    ) -> Path:
+        """Persist the fitted StandardScaler, LogisticRegression model, and evaluation summary."""
+        if not self.is_fitted:
+            self.fit_and_evaluate()
+        out_path = Path(artifact_path).resolve()
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "model_id": "pairwise_linear_ranker_v1_synthetic_demo",
+            "random_state": self.random_state,
+            "c_reg": self.c_reg,
+            "feature_names": list(FEATURE_NAMES),
+            "scaler": self.scaler,
+            "model": self.model,
+            "is_synthetic_benchmark": self.is_synthetic_benchmark,
+            "evaluation_summary": self.evaluation_summary,
+        }
+        joblib.dump(payload, out_path)
+        return out_path
+
+    @classmethod
+    def load_or_train(
+        cls,
+        artifact_path: str | Path = DEFAULT_ML_MODEL_ARTIFACT_PATH,
+        report_path: str | Path = DEFAULT_ML_REPORT_PATH,
+        random_state: int = 42,
+    ) -> "PairwiseRouteRanker":
+        """Load persisted model artifact if compatible with current FEATURE_NAMES; otherwise train and save."""
+        path_obj = Path(artifact_path).resolve()
+        if path_obj.exists():
+            try:
+                payload = joblib.load(path_obj)
+                if payload.get("feature_names") == list(FEATURE_NAMES):
+                    instance = cls(
+                        random_state=int(payload.get("random_state", random_state)),
+                        c_reg=float(payload.get("c_reg", 1.0)),
+                    )
+                    instance.scaler = payload["scaler"]
+                    instance.model = payload["model"]
+                    instance.is_fitted = True
+                    instance.is_synthetic_benchmark = bool(
+                        payload.get("is_synthetic_benchmark", True)
+                    )
+                    instance.evaluation_summary = payload.get("evaluation_summary")
+                    return instance
+            except Exception:
+                pass
+
+        instance = cls(random_state=random_state)
+        summary = instance.fit_and_evaluate()
+        instance.save_model_artifact(path_obj)
+        save_ml_evaluation_report(summary, report_path)
+        return instance
 
     def _score_query_candidates_ml(
         self,
@@ -503,6 +583,13 @@ class PairwiseRouteRanker:
                     str(c["route_id"]): -float(c["evidence"]["estimated_duration_min"])
                     for c in cands
                 }
+            elif method == "hierarchy_only":
+                pred_scores = {
+                    str(c["route_id"]): float(
+                        c.get("component_scores", {}).get("road_hierarchy_score", 50.0)
+                    )
+                    for c in cands
+                }
             elif method == "deterministic_baseline":
                 pred_scores = {
                     str(c["route_id"]): float(c["overall_score"])
@@ -556,6 +643,22 @@ class PairwiseRouteRanker:
         pref: RoutePreferenceType = deterministic_evaluation.get("preference", "balanced")
         routes_identical = bool(deterministic_evaluation.get("routes_are_identical", False))
 
+        eval_metrics_summary: dict[str, Any] = {}
+        if self.evaluation_summary:
+            comp = self.evaluation_summary.get("held_out_test_comparison", {})
+            ml_comp = comp.get("pairwise_logistic_ranker_ml", {})
+            det_comp = comp.get("deterministic_multi_criteria_baseline", {})
+            eval_metrics_summary = {
+                "splitting_strategy": self.evaluation_summary.get(
+                    "split_verification", {}
+                ).get("splitting_strategy", "GroupShuffleSplit (60/20/20)"),
+                "test_pairwise_accuracy": ml_comp.get("pairwise_accuracy"),
+                "test_top1_agreement": ml_comp.get("top1_recommendation_agreement"),
+                "test_ndcg_at_3": ml_comp.get("ndcg_at_3"),
+                "deterministic_baseline_pairwise_accuracy": det_comp.get("pairwise_accuracy"),
+                "deterministic_baseline_ndcg_at_3": det_comp.get("ndcg_at_3"),
+            }
+
         if not cands:
             return {
                 "status": "experimental_synthetic_benchmark_only",
@@ -569,6 +672,24 @@ class PairwiseRouteRanker:
                 "predicted_ranking": [],
                 "win_probabilities": {},
                 "agreement_with_deterministic_baseline": True,
+                "evaluation_metrics_summary": eval_metrics_summary,
+            }
+
+        min_d = min(
+            max(0.01, float(c.get("evidence", {}).get("distance_km", 1.0)))
+            for c in cands
+        )
+        min_t = min(
+            max(0.01, float(c.get("evidence", {}).get("estimated_duration_min", 1.0)))
+            for c in cands
+        )
+        feature_values_by_route: dict[str, dict[str, float]] = {}
+        for c_item in cands:
+            rid = str(c_item["route_id"])
+            vec = extract_route_feature_vector(c_item, pref, min_d, min_t)
+            feature_values_by_route[rid] = {
+                fname: round(float(val), 4)
+                for fname, val in zip(FEATURE_NAMES, vec)
             }
 
         win_probs = self._score_query_candidates_ml(cands, pref)
@@ -596,6 +717,8 @@ class PairwiseRouteRanker:
             "predicted_ranking": predicted_order,
             "win_probabilities": win_probs,
             "agreement_with_deterministic_baseline": agrees,
+            "feature_values_by_route": feature_values_by_route,
+            "evaluation_metrics_summary": eval_metrics_summary,
         }
 
 
@@ -613,7 +736,9 @@ def save_ml_evaluation_report(
 if __name__ == "__main__":
     ranker = PairwiseRouteRanker(random_state=42)
     summary = ranker.fit_and_evaluate()
+    model_path = ranker.save_model_artifact()
     saved = save_ml_evaluation_report(summary)
+    print(f"Saved ML model artifact to: {model_path}")
     print(f"Saved ML route ranking evaluation report to: {saved}")
     print(json.dumps(summary, indent=2))
 

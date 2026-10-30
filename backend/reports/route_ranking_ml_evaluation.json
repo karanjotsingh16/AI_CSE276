@@ -1,61 +1,88 @@
 {
   "model_id": "pairwise_linear_ranker_v1_synthetic_demo",
   "model_type": "Pairwise LogisticRegression (antisymmetric difference ranker, fit_intercept=False)",
+  "model_artifact_path": "D:\\AI and ML Project\\backend\\models\\pairwise_route_ranker_v1.joblib",
   "status": "experimental_synthetic_benchmark_only",
   "is_synthetic_benchmark": true,
   "used_for_primary_recommendation": false,
-  "provenance_note": "Evaluated on query-grouped synthetic multi-criteria mountain corridor benchmark scenarios (data_source='synthetic_simulation_benchmark'). Validates feature extraction, GroupShuffleSplit zero-leakage partitioning, and NDCG/pairwise metrics. Do NOT claim real-world generalization without observed fleet telemetry labels.",
+  "provenance_note": "Evaluated on query-grouped synthetic multi-criteria mountain corridor benchmark scenarios (data_source='synthetic_simulation_benchmark') across all 4 preferences ('shortest', 'fastest', 'balanced', 'accessibility'). Validates 11-feature extraction, GroupShuffleSplit zero-leakage partitioning, and NDCG/pairwise metrics. Do NOT claim real-world generalization without observed fleet telemetry labels.",
+  "supported_preferences": [
+    "shortest",
+    "fastest",
+    "balanced",
+    "accessibility"
+  ],
+  "feature_names": [
+    "distance_ratio_to_min",
+    "duration_ratio_to_min",
+    "major_arterial_fraction",
+    "secondary_collector_fraction",
+    "local_road_fraction",
+    "intersection_density_per_km",
+    "bridge_tunnel_fraction",
+    "pref_shortest_x_dist_ratio",
+    "pref_fastest_x_time_ratio",
+    "pref_balanced_x_combined_ratio",
+    "pref_accessibility_x_hierarchy_penalty"
+  ],
   "split_verification": {
     "splitting_strategy": "GroupShuffleSplit by spatial_group_id (60% train / 20% val / 20% test)",
-    "train_queries": 108,
-    "validation_queries": 36,
-    "test_queries": 36,
-    "train_pairs": 648,
-    "validation_pairs": 216,
-    "test_pairs": 216,
+    "train_queries": 144,
+    "validation_queries": 48,
+    "test_queries": 48,
+    "train_pairs": 864,
+    "validation_pairs": 288,
+    "test_pairs": 288,
     "zero_group_overlap_verified": true
   },
   "pairwise_accuracy_by_split": {
-    "train": 0.9599,
-    "validation": 0.9815,
-    "test": 0.9815
+    "train": 0.963,
+    "validation": 0.9514,
+    "test": 0.9861
   },
   "held_out_test_comparison": {
     "shortest_distance_heuristic": {
-      "pairwise_accuracy": 0.2685,
-      "top1_recommendation_agreement": 0.1389,
-      "ndcg_at_2": 0.483,
-      "ndcg_at_3": 0.737
+      "pairwise_accuracy": 0.1875,
+      "top1_recommendation_agreement": 0.1042,
+      "ndcg_at_2": 0.4272,
+      "ndcg_at_3": 0.718
     },
     "fastest_time_heuristic": {
-      "pairwise_accuracy": 0.7963,
-      "top1_recommendation_agreement": 0.7778,
-      "ndcg_at_2": 0.8724,
-      "ndcg_at_3": 0.9415
+      "pairwise_accuracy": 0.8403,
+      "top1_recommendation_agreement": 0.7917,
+      "ndcg_at_2": 0.8981,
+      "ndcg_at_3": 0.9527
+    },
+    "road_hierarchy_heuristic": {
+      "pairwise_accuracy": 0.7708,
+      "top1_recommendation_agreement": 0.6458,
+      "ndcg_at_2": 0.8761,
+      "ndcg_at_3": 0.9371
     },
     "deterministic_multi_criteria_baseline": {
-      "pairwise_accuracy": 0.8333,
-      "top1_recommendation_agreement": 0.7222,
-      "ndcg_at_2": 0.937,
-      "ndcg_at_3": 0.9646
+      "pairwise_accuracy": 0.8819,
+      "top1_recommendation_agreement": 0.8333,
+      "ndcg_at_2": 0.9555,
+      "ndcg_at_3": 0.9802
     },
     "pairwise_logistic_ranker_ml": {
-      "pairwise_accuracy": 0.9815,
-      "top1_recommendation_agreement": 0.9722,
-      "ndcg_at_2": 0.9978,
-      "ndcg_at_3": 0.999
+      "pairwise_accuracy": 0.9861,
+      "top1_recommendation_agreement": 1.0,
+      "ndcg_at_2": 0.9983,
+      "ndcg_at_3": 0.9997
     }
   },
   "learned_feature_weights": {
-    "distance_ratio_to_min": -1.0344,
-    "duration_ratio_to_min": -2.1517,
-    "major_arterial_fraction": 1.1347,
-    "secondary_collector_fraction": -0.3268,
-    "local_road_fraction": -1.3327,
-    "intersection_density_per_km": -0.4236,
-    "bridge_tunnel_fraction": 0.2285,
-    "pref_shortest_x_dist_ratio": -4.1009,
-    "pref_fastest_x_time_ratio": -2.7916,
-    "pref_balanced_x_combined_ratio": -1.093
+    "distance_ratio_to_min": -0.7154,
+    "duration_ratio_to_min": -2.1338,
+    "major_arterial_fraction": 1.4952,
+    "secondary_collector_fraction": 0.0719,
+    "local_road_fraction": -0.724,
+    "intersection_density_per_km": -1.1683,
+    "bridge_tunnel_fraction": 0.2672,
+    "pref_shortest_x_dist_ratio": -3.3497,
+    "pref_fastest_x_time_ratio": -3.317,
+    "pref_balanced_x_combined_ratio": -0.9616,
+    "pref_accessibility_x_hierarchy_penalty": -1.7549
   }
 }

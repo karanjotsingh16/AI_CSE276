@@ -24,10 +24,8 @@ MAX_SNAP_DISTANCE_M = 3000.0
 
 @lru_cache(maxsize=1)
 def get_cached_ml_ranker() -> PairwiseRouteRanker:
-    """Initialize and fit the experimental pairwise route ranker once."""
-    ranker = PairwiseRouteRanker(random_state=42)
-    ranker.fit_and_evaluate()
-    return ranker
+    """Initialize or load the experimental pairwise route ranker artifact."""
+    return PairwiseRouteRanker.load_or_train(random_state=42)
 
 
 class RouteEngineError(Exception):

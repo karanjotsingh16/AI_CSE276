@@ -46,6 +46,15 @@ export interface BackendMlRankingInfo {
   predicted_ranking: string[];
   win_probabilities: Record<string, number>;
   agreement_with_deterministic_baseline: boolean;
+  feature_values_by_route?: Record<string, Record<string, number>>;
+  evaluation_metrics_summary?: {
+    splitting_strategy?: string;
+    test_pairwise_accuracy?: number;
+    test_top1_agreement?: number;
+    test_ndcg_at_3?: number;
+    deterministic_baseline_pairwise_accuracy?: number;
+    deterministic_baseline_ndcg_at_3?: number;
+  };
 }
 
 export interface RouteEvaluationBreakdown {

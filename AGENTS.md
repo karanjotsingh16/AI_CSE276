@@ -96,26 +96,39 @@ NOT covered by the local graph: Guwahati, Jowai, Nongpoh.
 
 - **Master Development Plan Progress:**
   - **Phase 0 (Codebase Audit & Gap Analysis):** Completed & approved by user (2026-10-30).
-  - **Phase 1 (Routing Foundation — Module A):** Completed & verified (2026-10-30). Waiting for user approval before Phase 2.
-- Backend server: running on `127.0.0.1:8000`; `/health` OK. (Background processes die on IDE/server restart; re-check.)
+  - **Phase 1 (Routing Foundation — Module A):** Completed & verified (2026-10-30).
+  - **Phase 2 (Route-Ranking ML — Priority B / Module B):** Completed & verified (2026-10-30).
+- Backend server: running on `127.0.0.1:8000`; `/health` OK, `/api/ml-ranking/evaluation` OK, `/api/routes` OK.
 - Frontend build + lint: passed 2026-10-30 (`tsc -b && vite build` exit code 0; `oxlint` 0 errors, 13 legacy warnings).
 - Backend tests confirmed passing (2026-10-30, exit code 0):
-  - `test_geocoding_and_regions.py`
-  - `test_route_scoring.py`
+  - `test_route_ranking_ml.py`
   - `test_route_engine.py`
+  - `test_route_scoring.py`
+  - `test_geocoding_and_regions.py`
   - `test_demand_clustering.py`
 
 ## 6. In-Progress Work (unfinished — read before continuing)
 
-- **Completed Phase 1 (Module A — Intelligent Route Optimization):**
-  - All 8 North Eastern states (**Assam, Meghalaya, Arunachal Pradesh, Manipur, Mizoram, Nagaland, Tripura, Sikkim**) are configured in `backend/data/regions_catalog.json` (10 regional entries) and `backend/geocoding_service.py` gazetteer.
-  - Synthetic offline geometry (`_build_offline_india_corridor`) removed from `backend/pan_india_routing.py`; out-of-coverage routes raise `OutOfCoverageError` with `--acquire <region_id>` instructions.
-  - `RouteEngine` (`backend/route_engine.py`) generates a 3rd penalized-edge alternative (`alternative_corridor`, `2.4×` interior-edge penalty), deduplicates identical routes (`deduplicate_candidate_routes`), and attaches `data_provenance` and `estimation_limitations`.
-  - `route_scoring.py` and `frontend/src/logic/routeScoring.ts` support 4 priorities (`shortest`, `fastest`, `balanced`, `accessibility`) and explicitly report `completeness_score` plus `unavailable_component_scores` (`weather_exposure_score: None`, `confirmed_disruptions_score: None`, `live_traffic_score: None`).
-  - Frontend (`App.tsx`, `MapView.tsx`, `LocationSearchInput.tsx`, `formatters.ts`) displays all estimated durations in `X hr Y min`, supports 8-state NER map view, and shows `--acquire` CLI commands for un-downloaded NER state graphs.
-- **Next Phase (awaiting user approval):** Phase 2 — Route-Ranking ML (`backend/route_ranking_ml.py`, `backend/test_route_ranking_ml.py`, and frontend evaluation transparency).
+- **Completed Phase 2 (Route-Ranking ML & Evaluation Transparency):**
+  - Expanded `PairwiseRouteRanker` ([`backend/route_ranking_ml.py`](file:///d:/AI%20and%20ML%20Project/backend/route_ranking_ml.py)) to 11-dimensional feature vectors (`pref_accessibility_x_hierarchy_penalty`), supporting all 4 preferences (`shortest`, `fastest`, `balanced`, `accessibility`).
+  - Saved model artifact ([`backend/models/pairwise_route_ranker_v1.joblib`](file:///d:/AI%20and%20ML%20Project/backend/models/pairwise_route_ranker_v1.joblib)) with fast disk caching via `load_or_train()`.
+  - Comprehensive 5-method benchmark comparison on held-out test set (288 pairs) across 240 queries with strict GroupShuffleSplit spatial partitioning: Pairwise ML Ranker (98.6% acc, 0.9997 NDCG@3) vs. Deterministic Multi-Criteria Baseline (88.2% acc, 0.9802 NDCG@3) vs. Single-Objective Heuristics.
+  - Transparent frontend drawer in [`frontend/src/App.tsx`](file:///d:/AI%20and%20ML%20Project/frontend/src/App.tsx) displaying candidate win probabilities, benchmark comparison table, and clear academic integrity disclosures (synthetic benchmark vs. deterministic primary dispatch).
+- **Next Phase:** Phase 3 — Weather Intelligence & Disruptions Integration.
 
 ## 7. Change Log (newest first)
+
+### 2026-10-30 (Phase 2 — Route-Ranking ML Pipeline & Evaluation Transparency)
+- `backend/route_ranking_ml.py`:
+  - Upgraded feature representation to 11 dimensions with accessibility preference support.
+  - Implemented `save_model_artifact` saving `backend/models/pairwise_route_ranker_v1.joblib` and `load_or_train()` fast-loading method.
+  - Expanded benchmark evaluation to 5 methods including `road_hierarchy_heuristic`.
+  - Added feature values and evaluation summary reporting to `rank_live_evaluation_candidates`.
+- `backend/route_engine.py`: updated `get_cached_ml_ranker` to use `PairwiseRouteRanker.load_or_train(random_state=42)`.
+- `backend/test_route_ranking_ml.py`: expanded tests to verify 240 benchmark queries across 4 preferences, model artifact saving/loading, and live candidate ranking.
+- `frontend/src/types/route.ts`: expanded `BackendMlRankingInfo` with `feature_values_by_route` and `evaluation_metrics_summary`.
+- `frontend/src/App.tsx`: added 3rd progressive disclosure drawer ("Route-ranking AI / ML (Experimental)") displaying candidate win probabilities, benchmark comparison table, and academic integrity disclaimers.
+- **Verified (all exit code 0):** `test_route_ranking_ml.py`, `test_route_engine.py`, `test_route_scoring.py`, `test_geocoding_and_regions.py`, `test_demand_clustering.py`, `npm run build`, `npm run lint` (0 errors), live `POST /api/routes` with `accessibility` preference.
 
 ### 2026-10-30 (Phase 1 — Module A: Intelligent Route Optimization)
 - `backend/data/regions_catalog.json`: expanded regional road-graph catalog to 10 regions covering all 8 North Eastern states (Meghalaya, Assam, Arunachal Pradesh, Manipur, Mizoram, Nagaland, Tripura, Sikkim).

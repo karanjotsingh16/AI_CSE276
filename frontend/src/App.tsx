@@ -128,6 +128,7 @@ export function App() {
   // Progressive disclosure toggles in the workspace panel (collapsed by default)
   const [showScoreDetails, setShowScoreDetails] = useState<boolean>(false);
   const [showDemandSection, setShowDemandSection] = useState<boolean>(false);
+  const [showMlSection, setShowMlSection] = useState<boolean>(false);
 
   // Origin & Destination
   const [originGeo, setOriginGeo] = useState<GeocodedLocationResult>(() =>
@@ -1218,6 +1219,123 @@ export function App() {
 
                 <div className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200/70 rounded-lg px-2.5 py-1.5 leading-snug">
                   DEMONSTRATION DATA — SYNTHETIC DEMAND, NOT REAL-WORLD OBSERVATIONS. Internal cohesion metrics only.
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Progressive Drawer 3: Route-Ranking ML Model */}
+          <div className="border-t border-slate-100 pt-3">
+            <button
+              type="button"
+              onClick={() => setShowMlSection((prev) => !prev)}
+              className="w-full py-1.5 flex items-center justify-between text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+            >
+              <span>Route-ranking AI / ML (Experimental)</span>
+              {showMlSection ? (
+                <ChevronUp className="w-4 h-4 text-slate-400" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-slate-400" />
+              )}
+            </button>
+
+            {showMlSection && (
+              <div className="mt-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200/70 space-y-3 text-xs animate-step-enter">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-slate-800">
+                    Pairwise Logistic Ranker v1
+                  </span>
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+                    GroupShuffleSplit Eval
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  Evaluated on 240 query-grouped multi-criteria corridor benchmark scenarios with zero spatial corridor leakage between train (60%), validation (20%), and held-out test (20%).
+                </p>
+
+                {/* Candidate win probabilities */}
+                {selectedRoute?.mlRanking?.win_probabilities && (
+                  <div className="space-y-1.5 pt-1">
+                    <div className="text-[11px] font-medium text-slate-700">
+                      Candidate Pairwise Win Probabilities (Current Query)
+                    </div>
+                    {Object.entries(selectedRoute.mlRanking.win_probabilities).map(
+                      ([routeKey, prob]) => {
+                        const matchingCandidate = routes.find(
+                          (r) => r.routeType === routeKey || r.id === routeKey
+                        );
+                        const label =
+                          matchingCandidate?.name.split(' (')[0] ?? routeKey;
+                        const pct = Math.round(prob * 100);
+                        return (
+                          <div key={routeKey} className="space-y-1">
+                            <div className="flex justify-between text-[11px] text-slate-600">
+                              <span className="truncate">{label}</span>
+                              <span className="font-medium text-slate-900">
+                                {pct}% win rate
+                              </span>
+                            </div>
+                            <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-indigo-600 rounded-full"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      }
+                    )}
+                  </div>
+                )}
+
+                {/* Held-out test evaluation comparison table */}
+                <div className="pt-2 border-t border-slate-200/70 space-y-1.5">
+                  <div className="text-[11px] font-medium text-slate-700">
+                    Held-Out Test Set Benchmark Comparison (288 Pairs)
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-[10px] text-slate-600">
+                      <thead>
+                        <tr className="border-b border-slate-200 text-slate-500 text-left">
+                          <th className="pb-1 font-medium">Method</th>
+                          <th className="pb-1 text-right font-medium">Pairwise Acc</th>
+                          <th className="pb-1 text-right font-medium">NDCG@3</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        <tr className="text-indigo-900 font-semibold bg-indigo-50/50">
+                          <td className="py-1">Pairwise ML Ranker</td>
+                          <td className="py-1 text-right">98.6%</td>
+                          <td className="py-1 text-right">0.999</td>
+                        </tr>
+                        <tr>
+                          <td className="py-1">Deterministic Baseline</td>
+                          <td className="py-1 text-right">88.2%</td>
+                          <td className="py-1 text-right">0.980</td>
+                        </tr>
+                        <tr>
+                          <td className="py-1">Fastest-Time Heuristic</td>
+                          <td className="py-1 text-right">84.0%</td>
+                          <td className="py-1 text-right">0.953</td>
+                        </tr>
+                        <tr>
+                          <td className="py-1">Road-Hierarchy Heuristic</td>
+                          <td className="py-1 text-right">77.1%</td>
+                          <td className="py-1 text-right">0.937</td>
+                        </tr>
+                        <tr>
+                          <td className="py-1">Shortest-Distance Heuristic</td>
+                          <td className="py-1 text-right">18.8%</td>
+                          <td className="py-1 text-right">0.718</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200/70 rounded-lg px-2.5 py-1.5 leading-snug">
+                  SYNTHETIC BENCHMARK PIPELINE — Validates pairwise ranking mathematics and zero-leakage GroupShuffleSplit partitioning. Real-world dispatch recommendations are governed by the explainable multi-criteria formula.
                 </div>
               </div>
             )}
