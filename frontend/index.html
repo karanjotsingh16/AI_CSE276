@@ -3,12 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0f172a" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SIH 26002 — AI Logistics &amp; Accessibility Intelligence</title>
+    <title>NER SmartRoute — AI Logistics &amp; Accessibility Intelligence</title>
     <meta name="description" content="SIH 26002 — AI Logistics &amp; Accessibility Intelligence: Government Alerts + Weather + OpenStreetMap + Risk-Aware Logistics for the North Eastern Region" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script>
+      if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
   </head>
   <body class="bg-slate-900 text-slate-800 antialiased overflow-hidden m-0 p-0">
     <div id="root" class="h-screen w-screen flex flex-col overflow-hidden"></div>

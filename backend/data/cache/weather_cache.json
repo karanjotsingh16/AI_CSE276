@@ -1,0 +1,827 @@
+{
+  "25.58_91.89": {
+    "cached_at": 1793351832.913162,
+    "data": {
+      "status": "available",
+      "location_name": "Origin Hub",
+      "latitude": 25.5787,
+      "longitude": 91.8933,
+      "temperature_c": 19.8,
+      "wind_speed_kmh": 2.3,
+      "max_rain_probability_pct": 97.0,
+      "max_precipitation_mm": 1.7,
+      "hourly_forecast": [
+        {
+          "time_iso": "2026-10-30T09:00",
+          "precipitation_probability_pct": 23.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 21.5
+        },
+        {
+          "time_iso": "2026-10-30T10:00",
+          "precipitation_probability_pct": 57.0,
+          "precipitation_mm": 0.1,
+          "temperature_c": 22.9
+        },
+        {
+          "time_iso": "2026-10-30T11:00",
+          "precipitation_probability_pct": 82.0,
+          "precipitation_mm": 1.5,
+          "temperature_c": 19.5
+        },
+        {
+          "time_iso": "2026-10-30T12:00",
+          "precipitation_probability_pct": 93.0,
+          "precipitation_mm": 1.7,
+          "temperature_c": 20.2
+        },
+        {
+          "time_iso": "2026-10-30T13:00",
+          "precipitation_probability_pct": 97.0,
+          "precipitation_mm": 0.2,
+          "temperature_c": 20.9
+        },
+        {
+          "time_iso": "2026-10-30T14:00",
+          "precipitation_probability_pct": 94.0,
+          "precipitation_mm": 0.6,
+          "temperature_c": 19.8
+        }
+      ],
+      "data_source": "Open-Meteo Weather API (WMO 0.25\u00b0 Seamless Numerical Model)",
+      "data_provenance": "Live numerical atmospheric weather observation and forecast.",
+      "cached_at": 1793351832.913162,
+      "from_cache": false
+    }
+  },
+  "25.43_91.83": {
+    "cached_at": 1793341404.2496986,
+    "data": {
+      "status": "available",
+      "location_name": "Corridor Waypoint #1",
+      "latitude": 25.43,
+      "longitude": 91.83,
+      "temperature_c": 16.8,
+      "wind_speed_kmh": 6.4,
+      "max_rain_probability_pct": 82.0,
+      "max_precipitation_mm": 0.7,
+      "hourly_forecast": [
+        {
+          "time_iso": "2026-10-30T06:00",
+          "precipitation_probability_pct": 2.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 14.6
+        },
+        {
+          "time_iso": "2026-10-30T07:00",
+          "precipitation_probability_pct": 0.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 17.3
+        },
+        {
+          "time_iso": "2026-10-30T08:00",
+          "precipitation_probability_pct": 4.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 19.1
+        },
+        {
+          "time_iso": "2026-10-30T09:00",
+          "precipitation_probability_pct": 27.0,
+          "precipitation_mm": 0.1,
+          "temperature_c": 20.3
+        },
+        {
+          "time_iso": "2026-10-30T10:00",
+          "precipitation_probability_pct": 58.0,
+          "precipitation_mm": 0.3,
+          "temperature_c": 21.0
+        },
+        {
+          "time_iso": "2026-10-30T11:00",
+          "precipitation_probability_pct": 82.0,
+          "precipitation_mm": 0.7,
+          "temperature_c": 16.9
+        }
+      ],
+      "data_source": "Open-Meteo Weather API (WMO 0.25\u00b0 Seamless Numerical Model)",
+      "data_provenance": "Live numerical atmospheric weather observation and forecast.",
+      "cached_at": 1793341404.2496986,
+      "from_cache": false
+    }
+  },
+  "25.27_91.73": {
+    "cached_at": 1793341405.2496898,
+    "data": {
+      "status": "available",
+      "location_name": "Destination Hub",
+      "latitude": 25.275,
+      "longitude": 91.7323,
+      "temperature_c": 20.6,
+      "wind_speed_kmh": 5.1,
+      "max_rain_probability_pct": 35.0,
+      "max_precipitation_mm": 0.6,
+      "hourly_forecast": [
+        {
+          "time_iso": "2026-10-30T06:00",
+          "precipitation_probability_pct": 0.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 17.2
+        },
+        {
+          "time_iso": "2026-10-30T07:00",
+          "precipitation_probability_pct": 0.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 19.9
+        },
+        {
+          "time_iso": "2026-10-30T08:00",
+          "precipitation_probability_pct": 2.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 21.6
+        },
+        {
+          "time_iso": "2026-10-30T09:00",
+          "precipitation_probability_pct": 11.0,
+          "precipitation_mm": 0.4,
+          "temperature_c": 22.0
+        },
+        {
+          "time_iso": "2026-10-30T10:00",
+          "precipitation_probability_pct": 24.0,
+          "precipitation_mm": 0.6,
+          "temperature_c": 21.2
+        },
+        {
+          "time_iso": "2026-10-30T11:00",
+          "precipitation_probability_pct": 35.0,
+          "precipitation_mm": 0.4,
+          "temperature_c": 20.4
+        }
+      ],
+      "data_source": "Open-Meteo Weather API (WMO 0.25\u00b0 Seamless Numerical Model)",
+      "data_provenance": "Live numerical atmospheric weather observation and forecast.",
+      "cached_at": 1793341405.2496898,
+      "from_cache": false
+    }
+  },
+  "25.49_91.82": {
+    "cached_at": 1793349467.8076637,
+    "data": {
+      "status": "available",
+      "location_name": "Corridor Waypoint #909",
+      "latitude": 25.4924,
+      "longitude": 91.8198,
+      "temperature_c": 19.9,
+      "wind_speed_kmh": 2.1,
+      "max_rain_probability_pct": 92.0,
+      "max_precipitation_mm": 0.4,
+      "hourly_forecast": [
+        {
+          "time_iso": "2026-10-30T08:00",
+          "precipitation_probability_pct": 4.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 18.8
+        },
+        {
+          "time_iso": "2026-10-30T09:00",
+          "precipitation_probability_pct": 27.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 20.1
+        },
+        {
+          "time_iso": "2026-10-30T10:00",
+          "precipitation_probability_pct": 58.0,
+          "precipitation_mm": 0.2,
+          "temperature_c": 21.8
+        },
+        {
+          "time_iso": "2026-10-30T11:00",
+          "precipitation_probability_pct": 82.0,
+          "precipitation_mm": 0.3,
+          "temperature_c": 20.8
+        },
+        {
+          "time_iso": "2026-10-30T12:00",
+          "precipitation_probability_pct": 91.0,
+          "precipitation_mm": 0.3,
+          "temperature_c": 20.5
+        },
+        {
+          "time_iso": "2026-10-30T13:00",
+          "precipitation_probability_pct": 92.0,
+          "precipitation_mm": 0.4,
+          "temperature_c": 21.1
+        }
+      ],
+      "data_source": "Open-Meteo Weather API (WMO 0.25\u00b0 Seamless Numerical Model)",
+      "data_provenance": "Live numerical atmospheric weather observation and forecast.",
+      "cached_at": 1793349467.8076637,
+      "from_cache": false
+    }
+  },
+  "25.4_91.77": {
+    "cached_at": 1793349469.4594755,
+    "data": {
+      "status": "available",
+      "location_name": "Corridor Waypoint #1819",
+      "latitude": 25.4002,
+      "longitude": 91.7709,
+      "temperature_c": 18.8,
+      "wind_speed_kmh": 4.4,
+      "max_rain_probability_pct": 92.0,
+      "max_precipitation_mm": 1.0,
+      "hourly_forecast": [
+        {
+          "time_iso": "2026-10-30T08:00",
+          "precipitation_probability_pct": 4.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 17.9
+        },
+        {
+          "time_iso": "2026-10-30T09:00",
+          "precipitation_probability_pct": 27.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 19.5
+        },
+        {
+          "time_iso": "2026-10-30T10:00",
+          "precipitation_probability_pct": 58.0,
+          "precipitation_mm": 0.1,
+          "temperature_c": 20.6
+        },
+        {
+          "time_iso": "2026-10-30T11:00",
+          "precipitation_probability_pct": 82.0,
+          "precipitation_mm": 0.3,
+          "temperature_c": 20.6
+        },
+        {
+          "time_iso": "2026-10-30T12:00",
+          "precipitation_probability_pct": 91.0,
+          "precipitation_mm": 1.0,
+          "temperature_c": 18.9
+        },
+        {
+          "time_iso": "2026-10-30T13:00",
+          "precipitation_probability_pct": 92.0,
+          "precipitation_mm": 0.8,
+          "temperature_c": 18.6
+        }
+      ],
+      "data_source": "Open-Meteo Weather API (WMO 0.25\u00b0 Seamless Numerical Model)",
+      "data_provenance": "Live numerical atmospheric weather observation and forecast.",
+      "cached_at": 1793349469.4594755,
+      "from_cache": false
+    }
+  },
+  "25.28_91.73": {
+    "cached_at": 1793351448.7716694,
+    "data": {
+      "status": "available",
+      "location_name": "Destination Hub",
+      "latitude": 25.2751,
+      "longitude": 91.7322,
+      "temperature_c": 21.4,
+      "wind_speed_kmh": 5.1,
+      "max_rain_probability_pct": 49.0,
+      "max_precipitation_mm": 1.2,
+      "hourly_forecast": [
+        {
+          "time_iso": "2026-10-30T09:00",
+          "precipitation_probability_pct": 11.0,
+          "precipitation_mm": 0.1,
+          "temperature_c": 21.1
+        },
+        {
+          "time_iso": "2026-10-30T10:00",
+          "precipitation_probability_pct": 24.0,
+          "precipitation_mm": 0.1,
+          "temperature_c": 22.4
+        },
+        {
+          "time_iso": "2026-10-30T11:00",
+          "precipitation_probability_pct": 35.0,
+          "precipitation_mm": 0.9,
+          "temperature_c": 22.1
+        },
+        {
+          "time_iso": "2026-10-30T12:00",
+          "precipitation_probability_pct": 43.0,
+          "precipitation_mm": 1.2,
+          "temperature_c": 20.3
+        },
+        {
+          "time_iso": "2026-10-30T13:00",
+          "precipitation_probability_pct": 49.0,
+          "precipitation_mm": 0.6,
+          "temperature_c": 20.7
+        },
+        {
+          "time_iso": "2026-10-30T14:00",
+          "precipitation_probability_pct": 49.0,
+          "precipitation_mm": 0.1,
+          "temperature_c": 21.4
+        }
+      ],
+      "data_source": "Open-Meteo Weather API (WMO 0.25\u00b0 Seamless Numerical Model)",
+      "data_provenance": "Live numerical atmospheric weather observation and forecast.",
+      "cached_at": 1793351448.7716694,
+      "from_cache": false
+    }
+  },
+  "25.5_91.86": {
+    "cached_at": 1793351834.8271477,
+    "data": {
+      "status": "available",
+      "location_name": "Corridor Waypoint #959",
+      "latitude": 25.5013,
+      "longitude": 91.8634,
+      "temperature_c": 17.8,
+      "wind_speed_kmh": 2.9,
+      "max_rain_probability_pct": 92.0,
+      "max_precipitation_mm": 0.4,
+      "hourly_forecast": [
+        {
+          "time_iso": "2026-10-30T09:00",
+          "precipitation_probability_pct": 27.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 19.2
+        },
+        {
+          "time_iso": "2026-10-30T10:00",
+          "precipitation_probability_pct": 58.0,
+          "precipitation_mm": 0.2,
+          "temperature_c": 20.9
+        },
+        {
+          "time_iso": "2026-10-30T11:00",
+          "precipitation_probability_pct": 82.0,
+          "precipitation_mm": 0.3,
+          "temperature_c": 20.0
+        },
+        {
+          "time_iso": "2026-10-30T12:00",
+          "precipitation_probability_pct": 91.0,
+          "precipitation_mm": 0.3,
+          "temperature_c": 19.6
+        },
+        {
+          "time_iso": "2026-10-30T13:00",
+          "precipitation_probability_pct": 92.0,
+          "precipitation_mm": 0.4,
+          "temperature_c": 20.3
+        },
+        {
+          "time_iso": "2026-10-30T14:00",
+          "precipitation_probability_pct": 88.0,
+          "precipitation_mm": 0.1,
+          "temperature_c": 17.9
+        }
+      ],
+      "data_source": "Open-Meteo Weather API (WMO 0.25\u00b0 Seamless Numerical Model)",
+      "data_provenance": "Live numerical atmospheric weather observation and forecast.",
+      "cached_at": 1793351834.8271477,
+      "from_cache": false
+    }
+  },
+  "25.41_91.77": {
+    "cached_at": 1793352142.565391,
+    "data": {
+      "status": "available",
+      "location_name": "Corridor Waypoint #1919",
+      "latitude": 25.406,
+      "longitude": 91.774,
+      "temperature_c": 18.4,
+      "wind_speed_kmh": 4.4,
+      "max_rain_probability_pct": 92.0,
+      "max_precipitation_mm": 1.0,
+      "hourly_forecast": [
+        {
+          "time_iso": "2026-10-30T09:00",
+          "precipitation_probability_pct": 27.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 19.1
+        },
+        {
+          "time_iso": "2026-10-30T10:00",
+          "precipitation_probability_pct": 58.0,
+          "precipitation_mm": 0.1,
+          "temperature_c": 20.2
+        },
+        {
+          "time_iso": "2026-10-30T11:00",
+          "precipitation_probability_pct": 82.0,
+          "precipitation_mm": 0.3,
+          "temperature_c": 20.3
+        },
+        {
+          "time_iso": "2026-10-30T12:00",
+          "precipitation_probability_pct": 91.0,
+          "precipitation_mm": 1.0,
+          "temperature_c": 18.6
+        },
+        {
+          "time_iso": "2026-10-30T13:00",
+          "precipitation_probability_pct": 92.0,
+          "precipitation_mm": 0.8,
+          "temperature_c": 18.2
+        },
+        {
+          "time_iso": "2026-10-30T14:00",
+          "precipitation_probability_pct": 88.0,
+          "precipitation_mm": 0.1,
+          "temperature_c": 18.6
+        }
+      ],
+      "data_source": "Open-Meteo Weather API (WMO 0.25\u00b0 Seamless Numerical Model)",
+      "data_provenance": "Live numerical atmospheric weather observation and forecast.",
+      "cached_at": 1793352142.565391,
+      "from_cache": false
+    }
+  },
+  "25.48_91.92": {
+    "cached_at": 1793352144.0243876,
+    "data": {
+      "status": "available",
+      "location_name": "Corridor Waypoint #1227",
+      "latitude": 25.4796,
+      "longitude": 91.9156,
+      "temperature_c": 17.8,
+      "wind_speed_kmh": 2.9,
+      "max_rain_probability_pct": 97.0,
+      "max_precipitation_mm": 0.4,
+      "hourly_forecast": [
+        {
+          "time_iso": "2026-10-30T09:00",
+          "precipitation_probability_pct": 23.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 19.2
+        },
+        {
+          "time_iso": "2026-10-30T10:00",
+          "precipitation_probability_pct": 57.0,
+          "precipitation_mm": 0.2,
+          "temperature_c": 20.9
+        },
+        {
+          "time_iso": "2026-10-30T11:00",
+          "precipitation_probability_pct": 82.0,
+          "precipitation_mm": 0.3,
+          "temperature_c": 20.0
+        },
+        {
+          "time_iso": "2026-10-30T12:00",
+          "precipitation_probability_pct": 93.0,
+          "precipitation_mm": 0.3,
+          "temperature_c": 19.6
+        },
+        {
+          "time_iso": "2026-10-30T13:00",
+          "precipitation_probability_pct": 97.0,
+          "precipitation_mm": 0.4,
+          "temperature_c": 20.3
+        },
+        {
+          "time_iso": "2026-10-30T14:00",
+          "precipitation_probability_pct": 94.0,
+          "precipitation_mm": 0.1,
+          "temperature_c": 17.9
+        }
+      ],
+      "data_source": "Open-Meteo Weather API (WMO 0.25\u00b0 Seamless Numerical Model)",
+      "data_provenance": "Live numerical atmospheric weather observation and forecast.",
+      "cached_at": 1793352144.0243876,
+      "from_cache": false
+    }
+  },
+  "25.4_91.75": {
+    "cached_at": 1793352145.318645,
+    "data": {
+      "status": "available",
+      "location_name": "Corridor Waypoint #2455",
+      "latitude": 25.3953,
+      "longitude": 91.7471,
+      "temperature_c": 18.7,
+      "wind_speed_kmh": 4.4,
+      "max_rain_probability_pct": 92.0,
+      "max_precipitation_mm": 1.0,
+      "hourly_forecast": [
+        {
+          "time_iso": "2026-10-30T09:00",
+          "precipitation_probability_pct": 27.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 19.4
+        },
+        {
+          "time_iso": "2026-10-30T10:00",
+          "precipitation_probability_pct": 58.0,
+          "precipitation_mm": 0.1,
+          "temperature_c": 20.5
+        },
+        {
+          "time_iso": "2026-10-30T11:00",
+          "precipitation_probability_pct": 82.0,
+          "precipitation_mm": 0.3,
+          "temperature_c": 20.6
+        },
+        {
+          "time_iso": "2026-10-30T12:00",
+          "precipitation_probability_pct": 91.0,
+          "precipitation_mm": 1.0,
+          "temperature_c": 18.9
+        },
+        {
+          "time_iso": "2026-10-30T13:00",
+          "precipitation_probability_pct": 92.0,
+          "precipitation_mm": 0.8,
+          "temperature_c": 18.5
+        },
+        {
+          "time_iso": "2026-10-30T14:00",
+          "precipitation_probability_pct": 88.0,
+          "precipitation_mm": 0.1,
+          "temperature_c": 18.9
+        }
+      ],
+      "data_source": "Open-Meteo Weather API (WMO 0.25\u00b0 Seamless Numerical Model)",
+      "data_provenance": "Live numerical atmospheric weather observation and forecast.",
+      "cached_at": 1793352145.318645,
+      "from_cache": false
+    }
+  },
+  "25.47_91.83": {
+    "cached_at": 1793351447.3428805,
+    "data": {
+      "status": "available",
+      "location_name": "Corridor Waypoint #733",
+      "latitude": 25.4652,
+      "longitude": 91.8266,
+      "temperature_c": 18.7,
+      "wind_speed_kmh": 2.8,
+      "max_rain_probability_pct": 92.0,
+      "max_precipitation_mm": 0.4,
+      "hourly_forecast": [
+        {
+          "time_iso": "2026-10-30T09:00",
+          "precipitation_probability_pct": 27.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 20.1
+        },
+        {
+          "time_iso": "2026-10-30T10:00",
+          "precipitation_probability_pct": 58.0,
+          "precipitation_mm": 0.2,
+          "temperature_c": 21.8
+        },
+        {
+          "time_iso": "2026-10-30T11:00",
+          "precipitation_probability_pct": 82.0,
+          "precipitation_mm": 0.3,
+          "temperature_c": 20.8
+        },
+        {
+          "time_iso": "2026-10-30T12:00",
+          "precipitation_probability_pct": 91.0,
+          "precipitation_mm": 0.3,
+          "temperature_c": 20.5
+        },
+        {
+          "time_iso": "2026-10-30T13:00",
+          "precipitation_probability_pct": 92.0,
+          "precipitation_mm": 0.4,
+          "temperature_c": 21.1
+        },
+        {
+          "time_iso": "2026-10-30T14:00",
+          "precipitation_probability_pct": 88.0,
+          "precipitation_mm": 0.1,
+          "temperature_c": 18.7
+        }
+      ],
+      "data_source": "Open-Meteo Weather API (WMO 0.25\u00b0 Seamless Numerical Model)",
+      "data_provenance": "Live numerical atmospheric weather observation and forecast.",
+      "cached_at": 1793351447.3428805,
+      "from_cache": false
+    }
+  },
+  "25.38_91.75": {
+    "cached_at": 1793351451.7712908,
+    "data": {
+      "status": "available",
+      "location_name": "Corridor Waypoint #1442",
+      "latitude": 25.376,
+      "longitude": 91.7518,
+      "temperature_c": 19.2,
+      "wind_speed_kmh": 4.5,
+      "max_rain_probability_pct": 92.0,
+      "max_precipitation_mm": 1.0,
+      "hourly_forecast": [
+        {
+          "time_iso": "2026-10-30T09:00",
+          "precipitation_probability_pct": 27.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 19.8
+        },
+        {
+          "time_iso": "2026-10-30T10:00",
+          "precipitation_probability_pct": 58.0,
+          "precipitation_mm": 0.1,
+          "temperature_c": 20.9
+        },
+        {
+          "time_iso": "2026-10-30T11:00",
+          "precipitation_probability_pct": 82.0,
+          "precipitation_mm": 0.3,
+          "temperature_c": 20.9
+        },
+        {
+          "time_iso": "2026-10-30T12:00",
+          "precipitation_probability_pct": 91.0,
+          "precipitation_mm": 1.0,
+          "temperature_c": 19.2
+        },
+        {
+          "time_iso": "2026-10-30T13:00",
+          "precipitation_probability_pct": 92.0,
+          "precipitation_mm": 0.8,
+          "temperature_c": 18.9
+        },
+        {
+          "time_iso": "2026-10-30T14:00",
+          "precipitation_probability_pct": 88.0,
+          "precipitation_mm": 0.1,
+          "temperature_c": 19.2
+        }
+      ],
+      "data_source": "Open-Meteo Weather API (WMO 0.25\u00b0 Seamless Numerical Model)",
+      "data_provenance": "Live numerical atmospheric weather observation and forecast.",
+      "cached_at": 1793351451.7712908,
+      "from_cache": false
+    }
+  },
+  "25.55_91.85": {
+    "cached_at": 1793351446.1953688,
+    "data": {
+      "status": "available",
+      "location_name": "Origin Hub",
+      "latitude": 25.5454,
+      "longitude": 91.846,
+      "temperature_c": 17.2,
+      "wind_speed_kmh": 3.3,
+      "max_rain_probability_pct": 92.0,
+      "max_precipitation_mm": 3.2,
+      "hourly_forecast": [
+        {
+          "time_iso": "2026-10-30T09:00",
+          "precipitation_probability_pct": 27.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 18.9
+        },
+        {
+          "time_iso": "2026-10-30T10:00",
+          "precipitation_probability_pct": 58.0,
+          "precipitation_mm": 0.2,
+          "temperature_c": 20.4
+        },
+        {
+          "time_iso": "2026-10-30T11:00",
+          "precipitation_probability_pct": 82.0,
+          "precipitation_mm": 0.6,
+          "temperature_c": 18.6
+        },
+        {
+          "time_iso": "2026-10-30T12:00",
+          "precipitation_probability_pct": 91.0,
+          "precipitation_mm": 0.3,
+          "temperature_c": 18.9
+        },
+        {
+          "time_iso": "2026-10-30T13:00",
+          "precipitation_probability_pct": 92.0,
+          "precipitation_mm": 0.2,
+          "temperature_c": 19.0
+        },
+        {
+          "time_iso": "2026-10-30T14:00",
+          "precipitation_probability_pct": 88.0,
+          "precipitation_mm": 3.2,
+          "temperature_c": 17.2
+        }
+      ],
+      "data_source": "Open-Meteo Weather API (WMO 0.25\u00b0 Seamless Numerical Model)",
+      "data_provenance": "Live numerical atmospheric weather observation and forecast.",
+      "cached_at": 1793351446.1953688,
+      "from_cache": false
+    }
+  },
+  "25.46_91.83": {
+    "cached_at": 1793351450.3408396,
+    "data": {
+      "status": "available",
+      "location_name": "Corridor Waypoint #721",
+      "latitude": 25.4628,
+      "longitude": 91.8273,
+      "temperature_c": 18.7,
+      "wind_speed_kmh": 2.8,
+      "max_rain_probability_pct": 92.0,
+      "max_precipitation_mm": 0.4,
+      "hourly_forecast": [
+        {
+          "time_iso": "2026-10-30T09:00",
+          "precipitation_probability_pct": 27.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 20.1
+        },
+        {
+          "time_iso": "2026-10-30T10:00",
+          "precipitation_probability_pct": 58.0,
+          "precipitation_mm": 0.2,
+          "temperature_c": 21.8
+        },
+        {
+          "time_iso": "2026-10-30T11:00",
+          "precipitation_probability_pct": 82.0,
+          "precipitation_mm": 0.3,
+          "temperature_c": 20.8
+        },
+        {
+          "time_iso": "2026-10-30T12:00",
+          "precipitation_probability_pct": 91.0,
+          "precipitation_mm": 0.3,
+          "temperature_c": 20.5
+        },
+        {
+          "time_iso": "2026-10-30T13:00",
+          "precipitation_probability_pct": 92.0,
+          "precipitation_mm": 0.4,
+          "temperature_c": 21.1
+        },
+        {
+          "time_iso": "2026-10-30T14:00",
+          "precipitation_probability_pct": 88.0,
+          "precipitation_mm": 0.1,
+          "temperature_c": 18.7
+        }
+      ],
+      "data_source": "Open-Meteo Weather API (WMO 0.25\u00b0 Seamless Numerical Model)",
+      "data_provenance": "Live numerical atmospheric weather observation and forecast.",
+      "cached_at": 1793351450.3408396,
+      "from_cache": false
+    }
+  },
+  "25.44_91.83": {
+    "cached_at": 1793351812.0078695,
+    "data": {
+      "status": "available",
+      "location_name": "Corridor Waypoint #978",
+      "latitude": 25.4422,
+      "longitude": 91.8288,
+      "temperature_c": 18.0,
+      "wind_speed_kmh": 2.9,
+      "max_rain_probability_pct": 92.0,
+      "max_precipitation_mm": 0.4,
+      "hourly_forecast": [
+        {
+          "time_iso": "2026-10-30T09:00",
+          "precipitation_probability_pct": 27.0,
+          "precipitation_mm": 0.0,
+          "temperature_c": 19.4
+        },
+        {
+          "time_iso": "2026-10-30T10:00",
+          "precipitation_probability_pct": 58.0,
+          "precipitation_mm": 0.2,
+          "temperature_c": 21.1
+        },
+        {
+          "time_iso": "2026-10-30T11:00",
+          "precipitation_probability_pct": 82.0,
+          "precipitation_mm": 0.3,
+          "temperature_c": 20.1
+        },
+        {
+          "time_iso": "2026-10-30T12:00",
+          "precipitation_probability_pct": 91.0,
+          "precipitation_mm": 0.3,
+          "temperature_c": 19.8
+        },
+        {
+          "time_iso": "2026-10-30T13:00",
+          "precipitation_probability_pct": 92.0,
+          "precipitation_mm": 0.4,
+          "temperature_c": 20.4
+        },
+        {
+          "time_iso": "2026-10-30T14:00",
+          "precipitation_probability_pct": 88.0,
+          "precipitation_mm": 0.1,
+          "temperature_c": 18.0
+        }
+      ],
+      "data_source": "Open-Meteo Weather API (WMO 0.25\u00b0 Seamless Numerical Model)",
+      "data_provenance": "Live numerical atmospheric weather observation and forecast.",
+      "cached_at": 1793351812.0078695,
+      "from_cache": false
+    }
+  }
+}

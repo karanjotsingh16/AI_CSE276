@@ -1,16 +1,21 @@
 from __future__ import annotations
 
+import base64
 from contextlib import asynccontextmanager
 from functools import lru_cache
 import math
+import os
 from typing import Any, Literal
 
-from fastapi import Body, Depends, FastAPI, Query, Request, status
+from fastapi import Body, Depends, FastAPI, File, Query, Request, UploadFile, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from accessibility_service import AccessibilityService, UPLOADS_DIR
+from tracking_service import TrackingService
+from alerts_service import AlertsService
 from demand_clustering import (
     DEFAULT_SAMPLE_DEMAND_CSV,
     DemandClusteringError,
@@ -39,6 +44,8 @@ from route_engine import (
     RouteEngineError,
     UnreachableDestinationError,
     get_cached_ml_ranker,
+    get_cached_weather_service,
+    get_cached_disruptions_service,
 )
 from route_scoring import RoutePreferenceType
 
@@ -46,7 +53,12 @@ VITE_DEV_ORIGIN = "http://localhost:5173"
 VITE_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
+LOCAL_ORIGIN_REGEX = r"^https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$"
 
 
 @lru_cache(maxsize=1)
@@ -91,6 +103,24 @@ def get_cached_sample_demand_records() -> list[dict[str, Any]]:
     return load_demand_records_from_csv(DEFAULT_SAMPLE_DEMAND_CSV)
 
 
+@lru_cache(maxsize=1)
+def get_cached_accessibility_service() -> AccessibilityService:
+    """Create and cache the AccessibilityService instance."""
+    return AccessibilityService()
+
+
+@lru_cache(maxsize=1)
+def get_cached_tracking_service() -> TrackingService:
+    """Create and cache the TrackingService instance."""
+    return TrackingService()
+
+
+@lru_cache(maxsize=1)
+def get_cached_alerts_service() -> AlertsService:
+    """Create and cache the AlertsService instance."""
+    return AlertsService()
+
+
 def get_route_engine(request: Request) -> RouteEngine:
     """FastAPI dependency returning the startup-initialized or cached RouteEngine instance."""
     engine = getattr(request.app.state, "route_engine", None)
@@ -125,12 +155,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Restrict CORS strictly to the local Vite development server origin
+# Restrict CORS to local development origins with regex fallback for alternate ports
 app.add_middleware(
     CORSMiddleware,
     allow_origins=VITE_ALLOWED_ORIGINS,
+    allow_origin_regex=LOCAL_ORIGIN_REGEX,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -268,6 +299,8 @@ class SingleRouteResponse(BaseModel):
     estimation_limitations: list[str] | None = None
     merged_route_types: list[str] | None = None
     edge_summary: dict[str, Any] | None = None
+    weather: dict[str, Any] | None = None
+    disruptions: dict[str, Any] | None = None
     geometry: GeoJSONLineString
 
 
@@ -287,6 +320,8 @@ class RouteCalculationResponse(BaseModel):
     alternatives: list[SingleRouteResponse] | None = None
     evaluation: dict[str, Any] | None = None
     ml_ranking: dict[str, Any] | None = None
+    weather_summary: dict[str, Any] | None = None
+    disruptions_summary: dict[str, Any] | None = None
 
 
 class HealthResponse(BaseModel):
@@ -305,6 +340,14 @@ class GeocodeSearchRequest(BaseModel):
 
     query: str = Field(..., description="Location search text or 'lat, lng' coordinate string")
     limit: int = Field(default=6, ge=1, le=12, description="Maximum number of results to return")
+
+
+class DisruptionRouteCheckRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    coordinates: list[list[float]] = Field(
+        ..., description="List of [lng, lat] coordinate pairs along route polyline"
+    )
 
 
 class DemandZonesRequest(BaseModel):
@@ -755,3 +798,689 @@ def calculate_demand_zones_endpoint(
         random_state=params.random_state,
     )
     return clusterer.fit_predict(records)
+
+
+@app.get("/api/weather")
+def get_weather_endpoint(
+    lat: float = Query(..., ge=-90.0, le=90.0),
+    lng: float = Query(..., ge=-180.0, le=180.0),
+    location_name: str = Query(default=""),
+) -> dict[str, Any]:
+    """Fetch live or cached atmospheric weather observation and 6h forecast from Open-Meteo."""
+    svc = get_cached_weather_service()
+    return svc.fetch_point_weather(lat=lat, lng=lng, location_name=location_name)
+
+
+@app.get("/api/disruptions")
+def get_disruptions_endpoint(
+    active_only: bool = Query(default=True),
+) -> dict[str, Any]:
+    """List verified regional road disruption, slope debris, and bridge load-limit advisories."""
+    svc = get_cached_disruptions_service()
+    disruptions = svc.list_active_disruptions() if active_only else svc._disruptions
+    return {
+        "count": len(disruptions),
+        "disruptions": disruptions,
+        "data_source": "Official Regional Road Advisories (NHIDCL / Meghalaya PWD / SDMA / BRO)",
+    }
+
+
+@app.post("/api/disruptions/check-route")
+def check_route_disruptions_endpoint(
+    payload: DisruptionRouteCheckRequest,
+) -> dict[str, Any]:
+    """Check spatial intersection between candidate route polyline and verified active hazard zones."""
+    svc = get_cached_disruptions_service()
+    return svc.evaluate_route_disruptions(payload.coordinates)
+
+
+# ==============================================================================
+# Module D & E: Road Accessibility Monitoring & Field Reporting Endpoints
+# ==============================================================================
+
+
+class IncidentReportCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    title: str = Field(..., min_length=3, max_length=150)
+    description: str = Field(..., min_length=5, max_length=2000)
+    incident_type: Literal[
+        "road_blockage",
+        "flood",
+        "landslide",
+        "bridge_damage",
+        "road_damage",
+        "other",
+    ]
+    severity: Literal["low", "moderate", "severe", "critical"]
+    latitude: float = Field(..., ge=-90.0, le=90.0)
+    longitude: float = Field(..., ge=-180.0, le=180.0)
+    district: str = Field(..., min_length=2, max_length=100)
+    location_name: str = Field(..., min_length=2, max_length=150)
+    reporter_name: str = Field(..., min_length=2, max_length=100)
+    reporter_role: str = Field(default="field_worker", max_length=50)
+    contact_number: str | None = Field(default=None, max_length=30)
+    photo_url: str | None = Field(default=None, max_length=500)
+
+
+class IncidentReviewRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    new_status: Literal["verified", "rejected", "resolved"]
+    actor: str = Field(..., min_length=2, max_length=100)
+    review_notes: str = Field(..., min_length=3, max_length=1000)
+    cascade_to_segment: Literal["open", "restricted", "blocked"] | None = None
+
+
+class SegmentStatusUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    new_status: Literal["open", "restricted", "blocked", "unknown"]
+    actor: str = Field(..., min_length=2, max_length=100)
+    restriction_details: str | None = Field(default=None, max_length=500)
+    review_notes: str | None = Field(default=None, max_length=1000)
+
+
+@app.get("/api/accessibility/segments")
+def list_segments_endpoint(
+    district: str | None = Query(default=None),
+    status: Literal["open", "restricted", "blocked", "unknown"] | None = Query(default=None),
+) -> dict[str, Any]:
+    """List monitored road corridors with optional district and status filters."""
+    svc = get_cached_accessibility_service()
+    segments = svc.list_segments(district=district, status=status)
+    return {
+        "count": len(segments),
+        "segments": segments,
+        "disclaimer": "OFFICIAL CORRIDOR STATUSES. Segment closures require administrative review.",
+    }
+
+
+@app.get("/api/accessibility/segments/{segment_id}")
+def get_segment_endpoint(segment_id: str) -> dict[str, Any]:
+    """Fetch details of a single monitored road corridor."""
+    svc = get_cached_accessibility_service()
+    segment = svc.get_segment(segment_id)
+    if not segment:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"error": "segment_not_found", "detail": f"Road segment '{segment_id}' not found."},
+        )
+    return segment
+
+
+@app.patch("/api/accessibility/segments/{segment_id}/status")
+def update_segment_status_endpoint(
+    segment_id: str,
+    payload: SegmentStatusUpdateRequest,
+) -> dict[str, Any]:
+    """Update a road segment's operational status and record an immutable audit entry."""
+    svc = get_cached_accessibility_service()
+    try:
+        updated = svc.update_segment_status(
+            segment_id=segment_id,
+            new_status=payload.new_status,
+            actor=payload.actor,
+            restriction_details=payload.restriction_details,
+            review_notes=payload.review_notes,
+        )
+        return {"status": "success", "segment": updated}
+    except KeyError as exc:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"error": "segment_not_found", "detail": str(exc)},
+        )
+
+
+@app.get("/api/accessibility/incidents")
+def list_incidents_endpoint(
+    status: Literal["pending", "verified", "rejected", "resolved"] | None = Query(default=None),
+    incident_type: Literal[
+        "road_blockage",
+        "flood",
+        "landslide",
+        "bridge_damage",
+        "road_damage",
+        "other",
+    ]
+    | None = Query(default=None),
+    district: str | None = Query(default=None),
+) -> dict[str, Any]:
+    """List field incident reports with optional filters."""
+    svc = get_cached_accessibility_service()
+    incidents = svc.list_incidents(status=status, incident_type=incident_type, district=district)
+    return {
+        "count": len(incidents),
+        "incidents": incidents,
+    }
+
+
+@app.get("/api/accessibility/incidents/{report_id}")
+def get_incident_endpoint(report_id: str) -> dict[str, Any]:
+    """Get single incident report and its audit history."""
+    svc = get_cached_accessibility_service()
+    incident = svc.get_incident(report_id)
+    if not incident:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"error": "incident_not_found", "detail": f"Incident '{report_id}' not found."},
+        )
+    audit = svc.list_audit_logs(entity_type="incident", entity_id=report_id)
+    return {"incident": incident, "audit_trail": audit}
+
+
+@app.post("/api/accessibility/reports")
+def submit_incident_report_endpoint(
+    payload: IncidentReportCreateRequest,
+) -> dict[str, Any]:
+    """
+    Submit a field incident report.
+    Reports always enter 'pending' status until verified by an authorized reviewer.
+    """
+    svc = get_cached_accessibility_service()
+    incident = svc.submit_incident_report(
+        title=payload.title,
+        description=payload.description,
+        incident_type=payload.incident_type,
+        severity=payload.severity,
+        latitude=payload.latitude,
+        longitude=payload.longitude,
+        district=payload.district,
+        location_name=payload.location_name,
+        reporter_name=payload.reporter_name,
+        reporter_role=payload.reporter_role,
+        contact_number=payload.contact_number,
+        photo_url=payload.photo_url,
+    )
+    return {
+        "status": "created",
+        "message": "Incident report submitted successfully and placed in review queue.",
+        "incident": incident,
+    }
+
+
+@app.patch("/api/accessibility/incidents/{report_id}/status")
+def review_incident_endpoint(
+    report_id: str,
+    payload: IncidentReviewRequest,
+) -> dict[str, Any]:
+    """
+    Review and verify/reject/resolve an incident report.
+    Records reviewer name, notes, and timestamp in the audit trail.
+    """
+    svc = get_cached_accessibility_service()
+    try:
+        reviewed = svc.review_incident(
+            report_id=report_id,
+            new_status=payload.new_status,
+            actor=payload.actor,
+            review_notes=payload.review_notes,
+            cascade_to_segment=payload.cascade_to_segment,
+        )
+        return {
+            "status": "success",
+            "message": f"Incident {report_id} status updated to {payload.new_status}.",
+            "incident": reviewed,
+        }
+    except KeyError as exc:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"error": "incident_not_found", "detail": str(exc)},
+        )
+
+
+@app.get("/api/accessibility/audit-log")
+def list_audit_log_endpoint(
+    entity_type: Literal["incident", "road_segment"] | None = Query(default=None),
+    entity_id: str | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=200),
+) -> dict[str, Any]:
+    """Retrieve immutable audit log of status changes and administrative reviews."""
+    svc = get_cached_accessibility_service()
+    logs = svc.list_audit_logs(entity_type=entity_type, entity_id=entity_id, limit=limit)
+    return {"count": len(logs), "logs": logs}
+
+
+@app.post("/api/accessibility/upload-photo")
+async def upload_photo_endpoint(
+    file: UploadFile = File(...),
+) -> dict[str, Any]:
+    """Upload and validate an incident photograph (JPG, PNG, WebP up to 5 MB)."""
+    svc = get_cached_accessibility_service()
+    content = await file.read()
+    try:
+        photo_url = svc.save_uploaded_photo(file.filename or "photo.jpg", content)
+        return {"photo_url": photo_url, "filename": file.filename, "size_bytes": len(content)}
+    except ValueError as exc:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": "invalid_photo_upload", "detail": str(exc)},
+        )
+
+
+class PhotoUploadBase64Request(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    filename: str = Field(default="incident.jpg", max_length=100)
+    data_base64: str = Field(..., min_length=10)
+
+
+@app.post("/api/accessibility/upload-photo-base64")
+def upload_photo_base64_endpoint(payload: PhotoUploadBase64Request) -> dict[str, Any]:
+    """Upload and validate an incident photograph as base64 string (max 5 MB)."""
+    raw_b64 = payload.data_base64
+    if "," in raw_b64:
+        raw_b64 = raw_b64.split(",", 1)[1]
+    try:
+        content = base64.b64decode(raw_b64)
+    except Exception as exc:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": "invalid_base64", "detail": f"Could not decode base64: {exc}"},
+        )
+    svc = get_cached_accessibility_service()
+    try:
+        photo_url = svc.save_uploaded_photo(payload.filename, content)
+        return {"photo_url": photo_url, "filename": payload.filename, "size_bytes": len(content)}
+    except ValueError as exc:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": "invalid_photo_upload", "detail": str(exc)},
+        )
+
+
+@app.get("/api/accessibility/photos/{filename}")
+def serve_photo_endpoint(filename: str) -> Any:
+    """Serve saved incident evidence photograph."""
+    safe_path = UPLOADS_DIR / os.path.basename(filename)
+    if not safe_path.is_file():
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"error": "photo_not_found", "detail": "Photograph not found."},
+        )
+    return FileResponse(str(safe_path))
+
+
+# ==============================================================================
+# Module F: GPS Vehicle and Delivery Tracking Endpoints
+# ==============================================================================
+
+
+class VehicleRegisterRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    vehicle_id: str = Field(..., min_length=3, max_length=30)
+    name: str = Field(..., min_length=2, max_length=100)
+    vehicle_type: Literal["4x4", "Van", "Heavy Truck", "Electric Van", "Pickup"]
+    capacity_kg: float = Field(..., gt=0.0)
+    assigned_driver_name: str = Field(..., min_length=2, max_length=100)
+    assigned_driver_contact: str | None = Field(default=None, max_length=30)
+    initial_lat: float | None = Field(default=None, ge=-90.0, le=90.0)
+    initial_lng: float | None = Field(default=None, ge=-180.0, le=180.0)
+
+
+class DeliveryCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    vehicle_id: str = Field(..., min_length=3, max_length=30)
+    title: str = Field(..., min_length=3, max_length=150)
+    goods_category: Literal[
+        "Medical Supplies",
+        "Food Supplies",
+        "Relief Materials",
+        "General Cargo",
+        "Vaccines / Cold Chain",
+    ]
+    priority: Literal["Emergency", "High", "Normal", "Low"]
+    origin_name: str = Field(..., min_length=2, max_length=150)
+    origin_lat: float = Field(..., ge=-90.0, le=90.0)
+    origin_lng: float = Field(..., ge=-180.0, le=180.0)
+    destination_name: str = Field(..., min_length=2, max_length=150)
+    destination_lat: float = Field(..., ge=-90.0, le=90.0)
+    destination_lng: float = Field(..., ge=-180.0, le=180.0)
+    planned_distance_km: float = Field(..., gt=0.0)
+    planned_duration_minutes: float = Field(..., gt=0.0)
+    planned_route_geometry: list[list[float]] = Field(..., min_length=2)
+    dispatch_immediately: bool = True
+
+
+class DeliveryStatusUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    new_status: Literal[
+        "scheduled",
+        "dispatched",
+        "in_transit",
+        "delayed",
+        "delivered",
+        "interrupted",
+    ]
+    delay_reason: str | None = Field(default=None, max_length=500)
+
+
+class TelemetryUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    vehicle_id: str = Field(..., min_length=3, max_length=30)
+    latitude: float = Field(..., ge=-90.0, le=90.0)
+    longitude: float = Field(..., ge=-180.0, le=180.0)
+    speed_kph: float = Field(default=0.0, ge=0.0, le=160.0)
+    bearing: float = Field(default=0.0, ge=0.0, le=360.0)
+    delivery_id: str | None = Field(default=None, max_length=50)
+    source: Literal["real_gps", "simulated_demo"] = "real_gps"
+
+
+class SimulateStepRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    progress_step_pct: float = Field(default=5.0, gt=0.0, le=50.0)
+    simulate_deviation: bool = False
+
+
+@app.get("/api/tracking/vehicles")
+def list_vehicles_endpoint(
+    vehicle_type: Literal["4x4", "Van", "Heavy Truck", "Electric Van", "Pickup"] | None = Query(default=None),
+) -> dict[str, Any]:
+    """List registered vehicles with optional vehicle type filter."""
+    svc = get_cached_tracking_service()
+    vehicles = svc.list_vehicles(vehicle_type=vehicle_type)
+    return {"count": len(vehicles), "vehicles": vehicles}
+
+
+@app.post("/api/tracking/vehicles")
+def register_vehicle_endpoint(payload: VehicleRegisterRequest) -> dict[str, Any]:
+    """Register a new vehicle in the logistics fleet catalog."""
+    svc = get_cached_tracking_service()
+    try:
+        vehicle = svc.register_vehicle(
+            vehicle_id=payload.vehicle_id,
+            name=payload.name,
+            vehicle_type=payload.vehicle_type,
+            capacity_kg=payload.capacity_kg,
+            assigned_driver_name=payload.assigned_driver_name,
+            assigned_driver_contact=payload.assigned_driver_contact,
+            initial_lat=payload.initial_lat,
+            initial_lng=payload.initial_lng,
+        )
+        return {"status": "created", "vehicle": vehicle}
+    except ValueError as exc:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": "vehicle_registration_failed", "detail": str(exc)},
+        )
+
+
+@app.get("/api/tracking/vehicles/{vehicle_id}")
+def get_vehicle_endpoint(vehicle_id: str) -> dict[str, Any]:
+    """Fetch details of a single vehicle."""
+    svc = get_cached_tracking_service()
+    vehicle = svc.get_vehicle(vehicle_id)
+    if not vehicle:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"error": "vehicle_not_found", "detail": f"Vehicle '{vehicle_id}' not found."},
+        )
+    return vehicle
+
+
+@app.get("/api/tracking/deliveries")
+def list_deliveries_endpoint(
+    status: Literal[
+        "scheduled",
+        "dispatched",
+        "in_transit",
+        "delayed",
+        "delivered",
+        "interrupted",
+    ]
+    | None = Query(default=None),
+    vehicle_id: str | None = Query(default=None),
+) -> dict[str, Any]:
+    """List deliveries with optional status or vehicle filter."""
+    svc = get_cached_tracking_service()
+    deliveries = svc.list_deliveries(status=status, vehicle_id=vehicle_id)
+    return {"count": len(deliveries), "deliveries": deliveries}
+
+
+@app.post("/api/tracking/deliveries")
+def create_delivery_endpoint(payload: DeliveryCreateRequest) -> dict[str, Any]:
+    """Create and dispatch a new delivery mission."""
+    svc = get_cached_tracking_service()
+    try:
+        geometry_tuples = [(pt[0], pt[1]) for pt in payload.planned_route_geometry]
+        delivery = svc.create_delivery(
+            vehicle_id=payload.vehicle_id,
+            title=payload.title,
+            goods_category=payload.goods_category,
+            priority=payload.priority,
+            origin_name=payload.origin_name,
+            origin_lat=payload.origin_lat,
+            origin_lng=payload.origin_lng,
+            destination_name=payload.destination_name,
+            destination_lat=payload.destination_lat,
+            destination_lng=payload.destination_lng,
+            planned_distance_km=payload.planned_distance_km,
+            planned_duration_minutes=payload.planned_duration_minutes,
+            planned_route_geometry=geometry_tuples,
+            dispatch_immediately=payload.dispatch_immediately,
+        )
+        return {"status": "created", "delivery": delivery}
+    except KeyError as exc:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"error": "vehicle_not_found", "detail": str(exc)},
+        )
+    except ValueError as exc:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": "invalid_delivery_payload", "detail": str(exc)},
+        )
+
+
+@app.get("/api/tracking/deliveries/{delivery_id}")
+def get_delivery_endpoint(delivery_id: str) -> dict[str, Any]:
+    """Get single delivery details."""
+    svc = get_cached_tracking_service()
+    delivery = svc.get_delivery(delivery_id)
+    if not delivery:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"error": "delivery_not_found", "detail": f"Delivery '{delivery_id}' not found."},
+        )
+    return delivery
+
+
+@app.patch("/api/tracking/deliveries/{delivery_id}/status")
+def update_delivery_status_endpoint(
+    delivery_id: str,
+    payload: DeliveryStatusUpdateRequest,
+) -> dict[str, Any]:
+    """Update delivery operational status (e.g. mark delayed or delivered)."""
+    svc = get_cached_tracking_service()
+    try:
+        updated = svc.update_delivery_status(
+            delivery_id=delivery_id,
+            new_status=payload.new_status,
+            delay_reason=payload.delay_reason,
+        )
+        return {"status": "success", "delivery": updated}
+    except KeyError as exc:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"error": "delivery_not_found", "detail": str(exc)},
+        )
+
+
+@app.post("/api/tracking/telemetry")
+def record_telemetry_endpoint(payload: TelemetryUpdateRequest) -> dict[str, Any]:
+    """
+    Secure GPS telemetry update endpoint.
+    Computes distance to planned corridor and flags route deviations (> 500m).
+    """
+    svc = get_cached_tracking_service()
+    try:
+        res = svc.record_telemetry(
+            vehicle_id=payload.vehicle_id,
+            latitude=payload.latitude,
+            longitude=payload.longitude,
+            speed_kph=payload.speed_kph,
+            bearing=payload.bearing,
+            delivery_id=payload.delivery_id,
+            source=payload.source,
+        )
+        return res
+    except KeyError as exc:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"error": "vehicle_not_found", "detail": str(exc)},
+        )
+    except ValueError as exc:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": "invalid_telemetry_payload", "detail": str(exc)},
+        )
+
+
+@app.post("/api/tracking/deliveries/{delivery_id}/simulate-step")
+def simulate_delivery_step_endpoint(
+    delivery_id: str,
+    payload: SimulateStepRequest | None = Body(default=None),
+) -> dict[str, Any]:
+    """
+    Advance delivery vehicle along planned geometry for demonstration simulation.
+    Explicitly labeled as demonstration mode to maintain academic integrity.
+    """
+    svc = get_cached_tracking_service()
+    step_pct = payload.progress_step_pct if payload else 5.0
+    sim_dev = payload.simulate_deviation if payload else False
+    try:
+        res = svc.step_simulated_telemetry(
+            delivery_id=delivery_id,
+            progress_step_pct=step_pct,
+            simulate_deviation=sim_dev,
+        )
+        return res
+    except KeyError as exc:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"error": "delivery_not_found", "detail": str(exc)},
+        )
+    except ValueError as exc:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": "simulation_failed", "detail": str(exc)},
+        )
+
+
+@app.get("/api/tracking/vehicles/{vehicle_id}/telemetry-history")
+def get_telemetry_history_endpoint(
+    vehicle_id: str,
+    limit: int = Query(default=30, ge=1, le=100),
+) -> dict[str, Any]:
+    """Retrieve telemetry log history for a vehicle."""
+    svc = get_cached_tracking_service()
+    history = svc.get_telemetry_history(vehicle_id=vehicle_id, limit=limit)
+    return {"count": len(history), "history": history}
+
+
+# ==============================================================================
+# Module G: Alerts and Notifications Endpoints
+# ==============================================================================
+
+
+class AlertReadUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    is_read: bool = True
+
+
+@app.get("/api/notifications")
+def list_notifications_endpoint(
+    unread_only: bool = Query(default=False),
+    category: Literal[
+        "road_closure",
+        "landslide",
+        "flood",
+        "severe_weather",
+        "vehicle_delay",
+        "route_disruption",
+        "route_deviation",
+    ]
+    | None = Query(default=None),
+    severity: Literal["info", "warning", "severe", "critical"] | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+) -> dict[str, Any]:
+    """Retrieve operational alerts and notifications with optional filtering."""
+    svc = get_cached_alerts_service()
+    alerts = svc.list_alerts(
+        unread_only=unread_only,
+        category=category,
+        severity=severity,
+        limit=limit,
+    )
+    unread_count = svc.get_unread_count()
+    return {
+        "count": len(alerts),
+        "unread_count": unread_count,
+        "alerts": alerts,
+    }
+
+
+@app.get("/api/notifications/unread-count")
+def get_unread_count_endpoint() -> dict[str, Any]:
+    """Lightweight endpoint returning current unread alert count for badge counter."""
+    svc = get_cached_alerts_service()
+    return {"unread_count": svc.get_unread_count()}
+
+
+@app.patch("/api/notifications/{alert_id}/read")
+def mark_notification_read_endpoint(
+    alert_id: str,
+    payload: AlertReadUpdateRequest | None = Body(default=None),
+) -> dict[str, Any]:
+    """Mark an individual notification as read or unread."""
+    svc = get_cached_alerts_service()
+    is_read = payload.is_read if payload else True
+    try:
+        updated = svc.mark_alert_read(alert_id=alert_id, is_read=is_read)
+        return {"status": "success", "alert": updated, "unread_count": svc.get_unread_count()}
+    except KeyError as exc:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"error": "alert_not_found", "detail": str(exc)},
+        )
+
+
+@app.post("/api/notifications/mark-all-read")
+def mark_all_notifications_read_endpoint() -> dict[str, Any]:
+    """Mark all unread notifications as read."""
+    svc = get_cached_alerts_service()
+    marked_count = svc.mark_all_read()
+    return {
+        "status": "success",
+        "marked_count": marked_count,
+        "unread_count": 0,
+    }
+
+
+@app.post("/api/notifications/sync-triggers")
+def sync_notification_triggers_endpoint() -> dict[str, Any]:
+    """
+    Evaluate automated triggers across Accessibility, Disruptions, and Tracking modules.
+    Generates deduplicated operational alerts.
+    """
+    alerts_svc = get_cached_alerts_service()
+    acc_svc = get_cached_accessibility_service()
+    dis_svc = get_cached_disruptions_service()
+    track_svc = get_cached_tracking_service()
+
+    sync_result = alerts_svc.sync_automated_triggers(
+        accessibility_svc=acc_svc,
+        disruptions_svc=dis_svc,
+        tracking_svc=track_svc,
+    )
+    return {
+        "status": "success",
+        "sync_result": sync_result,
+    }
+
+
+@app.get("/api/notifications/channels")
+def get_notification_channels_endpoint() -> dict[str, Any]:
+    """List operational vs extensible notification channel adapters with honest provenance."""
+    svc = get_cached_alerts_service()
+    return svc.get_channel_registry()
+
+
+
+

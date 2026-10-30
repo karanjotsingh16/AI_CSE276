@@ -6,6 +6,8 @@ import { CriticalFacility, InfraCategory } from '../types/infrastructure';
 import { DisasterAlert } from '../types/alert';
 import { RadarState } from '../types/radar';
 import { DemandZonesResponse, getClusterColor } from '../types/demandZone';
+import { RoadSegment, IncidentReport } from '../types/accessibility';
+import { Vehicle, Delivery } from '../types/tracking';
 import { getRadarTileUrl } from '../services/radarService';
 import { NER_PILOT_BOUNDS, NER_CENTER, NER_DEFAULT_ZOOM } from '../data/locations';
 import { formatDurationHoursMinutes } from '../logic/formatters';
@@ -34,6 +36,13 @@ interface MapViewProps {
   routeError?: RouteErrorState | null;
   demandZones?: DemandZonesResponse | null;
   showDemandZones?: boolean;
+  roadSegments?: RoadSegment[];
+  fieldIncidents?: IncidentReport[];
+  showAccessibilityOverlay?: boolean;
+  vehicles?: Vehicle[];
+  deliveries?: Delivery[];
+  showVehiclesOverlay?: boolean;
+  onStepSimulation?: (deliveryId: string) => void;
 }
 
 export const MapView: React.FC<MapViewProps> = ({
@@ -53,13 +62,23 @@ export const MapView: React.FC<MapViewProps> = ({
   focusTarget,
   routeError: _routeError = null,
   demandZones = null,
-  showDemandZones = true
+  showDemandZones = true,
+  roadSegments = [],
+  fieldIncidents = [],
+  showAccessibilityOverlay = true,
+  vehicles = [],
+  deliveries = [],
+  showVehiclesOverlay = true,
+  onStepSimulation: _onStepSimulation,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
 
   const routesLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const demandZonesLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const accessibilityLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const incidentsLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const vehiclesLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const markersLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const facilitiesLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const alertsLayerGroupRef = useRef<L.LayerGroup | null>(null);
@@ -85,6 +104,9 @@ export const MapView: React.FC<MapViewProps> = ({
 
     routesLayerGroupRef.current = L.layerGroup().addTo(map);
     demandZonesLayerGroupRef.current = L.layerGroup().addTo(map);
+    accessibilityLayerGroupRef.current = L.layerGroup().addTo(map);
+    incidentsLayerGroupRef.current = L.layerGroup().addTo(map);
+    vehiclesLayerGroupRef.current = L.layerGroup().addTo(map);
     markersLayerGroupRef.current = L.layerGroup().addTo(map);
     facilitiesLayerGroupRef.current = L.layerGroup().addTo(map);
     alertsLayerGroupRef.current = L.layerGroup().addTo(map);
@@ -462,6 +484,205 @@ export const MapView: React.FC<MapViewProps> = ({
     });
   }, [demandZones, showDemandZones]);
 
+  // 4.6. Render Road Accessibility Corridors (Module D)
+  useEffect(() => {
+    if (!mapRef.current || !accessibilityLayerGroupRef.current) return;
+    const group = accessibilityLayerGroupRef.current;
+    group.clearLayers();
+
+    if (!showAccessibilityOverlay || roadSegments.length === 0) return;
+
+    roadSegments.forEach((seg) => {
+      if (!seg.coordinates || seg.coordinates.length < 2) return;
+
+      const isBlocked = seg.status === 'blocked';
+      const isRestricted = seg.status === 'restricted';
+      const color = isBlocked ? '#ef4444' : isRestricted ? '#f59e0b' : '#10b981';
+      const weight = isBlocked ? 5.5 : isRestricted ? 4.5 : 3.5;
+      const dashArray = isBlocked ? '8, 8' : isRestricted ? '6, 6' : undefined;
+
+      const polyline = L.polyline(seg.coordinates, {
+        color,
+        weight,
+        opacity: 0.85,
+        dashArray,
+      });
+
+      polyline.bindTooltip(
+        `<div class="p-1 text-xs font-sans">
+          <strong style="color: ${color}">${seg.name}</strong><br/>
+          Status: <strong class="uppercase">${seg.status}</strong> · ${seg.district}<br/>
+          <span class="text-[10px] text-slate-500">${seg.restriction_details || 'Open corridor'}</span>
+        </div>`,
+        { sticky: true }
+      );
+
+      polyline.bindPopup(
+        `<div class="text-xs p-1.5 font-sans max-w-[240px]">
+          <div class="font-bold text-slate-900" style="color: ${color}">
+            ${seg.name}
+          </div>
+          <div class="text-[10px] font-semibold uppercase text-slate-500 mt-0.5">
+            ${seg.district} • Class: ${seg.road_class.toUpperCase()}
+          </div>
+          <div class="mt-1 text-[11px] text-slate-700">
+            Status: <span class="font-bold uppercase" style="color: ${color}">${seg.status}</span>
+          </div>
+          ${
+            seg.restriction_details
+              ? `<div class="mt-1 p-1 rounded bg-slate-50 border border-slate-200 text-[10px] text-slate-600">
+                  ${seg.restriction_details}
+                </div>`
+              : ''
+          }
+        </div>`
+      );
+
+      polyline.addTo(group);
+    });
+  }, [roadSegments, showAccessibilityOverlay]);
+
+  // 4.7. Render Field Incidents (Module E)
+  useEffect(() => {
+    if (!mapRef.current || !incidentsLayerGroupRef.current) return;
+    const group = incidentsLayerGroupRef.current;
+    group.clearLayers();
+
+    if (!showAccessibilityOverlay || fieldIncidents.length === 0) return;
+
+    fieldIncidents.forEach((inc) => {
+      const isPending = inc.status === 'pending';
+      const isResolved = inc.status === 'resolved';
+      const color = isResolved ? '#10b981' : isPending ? '#f59e0b' : '#ef4444';
+
+      const icon = L.divIcon({
+        className: 'custom-div-icon',
+        html: `
+          <div class="relative flex items-center justify-center">
+            <div class="w-6 h-6 rounded-full text-white font-bold text-[10px] shadow-lg border-2 border-white flex items-center justify-center ring-2 hover:scale-125 transition-transform" style="background-color: ${color};">
+              !
+            </div>
+          </div>
+        `,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      });
+
+      const marker = L.marker([inc.latitude, inc.longitude], { icon });
+
+      marker.bindTooltip(
+        `<div class="p-1 text-xs font-sans">
+          <strong style="color: ${color}">${inc.title}</strong> (${inc.status.toUpperCase()})<br/>
+          ${inc.location_name} • Severity: <strong class="uppercase">${inc.severity}</strong>
+        </div>`,
+        { sticky: true }
+      );
+
+      marker.bindPopup(
+        `<div class="text-xs p-1.5 font-sans max-w-[240px]">
+          <div class="font-bold text-slate-900" style="color: ${color}">
+            ${inc.title}
+          </div>
+          <div class="text-[10px] font-semibold uppercase text-slate-500 mt-0.5">
+            ${inc.location_name} (${inc.district})
+          </div>
+          <div class="mt-1 text-[11px] text-slate-700">
+            Type: <strong>${inc.incident_type.replace('_', ' ')}</strong> · Severity: <strong class="uppercase">${inc.severity}</strong>
+          </div>
+          <div class="mt-0.5 text-[10px] text-slate-600">
+            Status: <strong class="uppercase" style="color: ${color}">${inc.status}</strong>
+          </div>
+          <p class="mt-1 text-[10px] text-slate-600 bg-slate-50 rounded p-1 border border-slate-100">
+            ${inc.description}
+          </p>
+          ${
+            inc.photo_url
+              ? `<div class="mt-1.5">
+                  <img src="${inc.photo_url}" alt="Evidence" class="w-full h-24 rounded object-cover border border-slate-200" />
+                </div>`
+              : ''
+          }
+        </div>`
+      );
+
+      marker.addTo(group);
+    });
+  }, [fieldIncidents, showAccessibilityOverlay]);
+
+  // 4.8. Render GPS Fleet Vehicles & Active Deliveries (Module F)
+  useEffect(() => {
+    if (!mapRef.current || !vehiclesLayerGroupRef.current) return;
+    const group = vehiclesLayerGroupRef.current;
+    group.clearLayers();
+
+    if (!showVehiclesOverlay || vehicles.length === 0) return;
+
+    vehicles.forEach((veh) => {
+      if (veh.current_latitude === null || veh.current_longitude === null) return;
+
+      const activeDel = deliveries.find(
+        (d) => d.vehicle_id === veh.vehicle_id && d.status !== 'delivered'
+      );
+      const isDeviated = activeDel?.is_deviated;
+      const statusColor = isDeviated ? '#ef4444' : activeDel ? '#0284c7' : '#10b981';
+
+      const icon = L.divIcon({
+        className: 'custom-div-icon',
+        html: `
+          <div class="relative flex items-center justify-center">
+            <div class="w-8 h-8 rounded-xl text-white font-bold text-[10px] shadow-lg border-2 border-white flex flex-col items-center justify-center ring-2 hover:scale-125 transition-all" style="background-color: ${statusColor}; ring-color: ${statusColor};">
+              <span class="text-[12px] leading-none" style="transform: rotate(${veh.current_bearing}deg);">➤</span>
+              <span class="text-[8px] font-mono leading-none mt-0.5">${veh.current_speed_kph.toFixed(0)}k</span>
+            </div>
+          </div>
+        `,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      });
+
+      const marker = L.marker([veh.current_latitude, veh.current_longitude], { icon });
+
+      marker.bindTooltip(
+        `<div class="p-1 text-xs font-sans">
+          <strong style="color: ${statusColor}">${veh.name}</strong> (${veh.vehicle_id})<br/>
+          Speed: <strong>${veh.current_speed_kph.toFixed(0)} km/h</strong> · Bearing: <strong>${veh.current_bearing.toFixed(0)}°</strong><br/>
+          ${activeDel ? `Mission: <strong>${activeDel.title}</strong>` : 'Available Fleet Vehicle'}
+        </div>`,
+        { sticky: true }
+      );
+
+      marker.bindPopup(
+        `<div class="text-xs p-1.5 font-sans max-w-[240px]">
+          <div class="font-bold text-slate-900" style="color: ${statusColor}">
+            ${veh.name}
+          </div>
+          <div class="text-[10px] font-mono text-slate-500 mt-0.5">
+            ${veh.vehicle_id} • Type: ${veh.vehicle_type}
+          </div>
+          <div class="mt-1 text-[11px] text-slate-700 space-y-0.5">
+            <div>Driver: <strong>${veh.assigned_driver_name}</strong></div>
+            <div>Speed: <strong>${veh.current_speed_kph.toFixed(0)} km/h</strong> · Bearing: <strong>${veh.current_bearing.toFixed(0)}°</strong></div>
+            <div>Mode: <span class="uppercase font-semibold text-[10px] text-slate-600">${veh.telemetry_mode}</span></div>
+          </div>
+          ${
+            activeDel
+              ? `<div class="mt-1.5 p-1.5 rounded-lg bg-sky-50 border border-sky-200 text-[10px] space-y-0.5">
+                  <div class="font-bold text-sky-950">${activeDel.title}</div>
+                  <div class="text-sky-800">Progress: <strong>${activeDel.progress_pct.toFixed(0)}%</strong></div>
+                  ${isDeviated ? `<div class="text-rose-700 font-bold">⚠️ Route Deviation: ${activeDel.deviation_distance_m.toFixed(0)}m off corridor</div>` : ''}
+                </div>`
+              : ''
+          }
+          <div class="mt-1.5 px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-[9px] font-semibold text-amber-900">
+            DEMO MODE — SIMULATED GPS TELEMETRY
+          </div>
+        </div>`
+      );
+
+      marker.addTo(group);
+    });
+  }, [vehicles, deliveries, showVehiclesOverlay]);
+
   // 5. Render RainViewer Radar Overlay Layer
   useEffect(() => {
     if (!mapRef.current) return;
@@ -530,6 +751,18 @@ export const MapView: React.FC<MapViewProps> = ({
             <span className="flex items-center gap-1.5 pl-2 border-l border-slate-200">
               <span className="w-2 h-2 rounded-full bg-purple-600 inline-block" />
               Demand Zones (K={demandZones.n_clusters})
+            </span>
+          )}
+          {showAccessibilityOverlay && roadSegments.length > 0 && (
+            <span className="flex items-center gap-1.5 pl-2 border-l border-slate-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+              Accessibility Corridors ({roadSegments.length})
+            </span>
+          )}
+          {showVehiclesOverlay && vehicles.length > 0 && (
+            <span className="flex items-center gap-1.5 pl-2 border-l border-slate-200">
+              <span className="w-2 h-2 rounded-full bg-sky-500 inline-block" />
+              GPS Fleet ({vehicles.length})
             </span>
           )}
         </div>

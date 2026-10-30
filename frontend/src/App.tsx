@@ -27,6 +27,25 @@ import {
   getClusterColor,
 } from './types/demandZone';
 import { GeocodedLocationResult } from './types/geocoding';
+import { RoadSegment, IncidentReport } from './types/accessibility';
+import {
+  fetchRoadSegments,
+  fetchIncidents,
+} from './services/accessibilityService';
+import { FieldReportModal } from './components/FieldReportModal';
+import { AccessibilityMonitorPanel } from './components/AccessibilityMonitorPanel';
+import { Vehicle, Delivery } from './types/tracking';
+import {
+  fetchVehicles,
+  fetchDeliveries,
+} from './services/trackingService';
+import { TrackingMonitorPanel } from './components/TrackingMonitorPanel';
+import { NewDeliveryModal } from './components/NewDeliveryModal';
+import { fetchUnreadCount } from './services/notificationService';
+import { NotificationCenterModal } from './components/NotificationCenterModal';
+import { useTranslation } from './i18n';
+import { subscribeToOfflineQueue } from './services/offlineQueueService';
+import { OfflineQueueModal } from './components/OfflineQueueModal';
 
 import {
   calculateRouteAlternatives,
@@ -45,6 +64,7 @@ import {
   convertGeocodedToLocationPoint,
   fetchDefaultLocationSuggestions,
 } from './services/geocodingService';
+import { fetchGovernmentDisasterAlerts } from './services/alertService';
 
 import {
   Navigation,
@@ -56,6 +76,12 @@ import {
   ChevronUp,
   RotateCcw,
   AlertCircle,
+  ShieldAlert,
+  Truck,
+  Bell,
+  Wifi,
+  WifiOff,
+  Globe,
 } from 'lucide-react';
 
 type AppStage = 'welcome' | 'endpoints' | 'details' | 'calculating' | 'workspace';
@@ -78,7 +104,6 @@ const VEHICLE_OPTIONS: VehicleType[] = [
 
 const DEFAULT_ACTIVE_INFRA: InfraCategory[] = [];
 const DEFAULT_FACILITIES: CriticalFacility[] = [];
-const DEFAULT_ALERTS: DisasterAlert[] = [];
 
 const INITIAL_RADAR: RadarState = {
   isActive: false,
@@ -129,6 +154,30 @@ export function App() {
   const [showScoreDetails, setShowScoreDetails] = useState<boolean>(false);
   const [showDemandSection, setShowDemandSection] = useState<boolean>(false);
   const [showMlSection, setShowMlSection] = useState<boolean>(false);
+  const [showAccessibilitySection, setShowAccessibilitySection] = useState<boolean>(false);
+  const [showTrackingSection, setShowTrackingSection] = useState<boolean>(false);
+
+  // Road Accessibility & Field Reports (Module D & E)
+  const [roadSegments, setRoadSegments] = useState<RoadSegment[]>([]);
+  const [fieldIncidents, setFieldIncidents] = useState<IncidentReport[]>([]);
+  const [isFieldReportModalOpen, setIsFieldReportModalOpen] = useState<boolean>(false);
+
+  // GPS Vehicle & Delivery Tracking (Module F)
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [deliveries, setDeliveries] = useState<Delivery[]>([]);
+  const [isNewDeliveryModalOpen, setIsNewDeliveryModalOpen] = useState<boolean>(false);
+
+  // Alerts & Notifications (Module G)
+  const [unreadAlertCount, setUnreadAlertCount] = useState<number>(0);
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState<boolean>(false);
+
+  // Multilingual & Offline PWA Sync Queue (Module H / Phase 7)
+  const { t, language, setLanguage } = useTranslation();
+  const [isOfflineQueueOpen, setIsOfflineQueueOpen] = useState<boolean>(false);
+  const [offlineDraftsCount, setOfflineDraftsCount] = useState<number>(0);
+  const [isOnline, setIsOnline] = useState<boolean>(
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
 
   // Origin & Destination
   const [originGeo, setOriginGeo] = useState<GeocodedLocationResult>(() =>
@@ -168,6 +217,9 @@ export function App() {
   const [showDemandZonesOverlay, setShowDemandZonesOverlay] =
     useState<boolean>(false);
   const [demandClusterCount, setDemandClusterCount] = useState<number>(4);
+
+  // Active Disruption Advisories
+  const [alerts, setAlerts] = useState<DisasterAlert[]>([]);
 
   const originPoint = convertGeocodedToLocationPoint(originGeo);
   const destinationPoint = convertGeocodedToLocationPoint(destinationGeo);
@@ -232,6 +284,18 @@ export function App() {
     },
     []
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchGovernmentDisasterAlerts(selectedRoute).then((res) => {
+      if (!cancelled) {
+        setAlerts(res.alerts);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedRoute]);
 
   const executeMissionCalculation = useCallback(
     async (
@@ -327,6 +391,70 @@ export function App() {
     return () => clearTimeout(timer);
   }, [loadDemandZones]);
 
+  const refreshAccessibilityData = useCallback(async () => {
+    try {
+      const [segs, incs] = await Promise.all([
+        fetchRoadSegments(),
+        fetchIncidents(),
+      ]);
+      setRoadSegments(segs);
+      setFieldIncidents(incs);
+    } catch (e) {
+      console.warn('Failed to load accessibility data:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshAccessibilityData();
+  }, [refreshAccessibilityData]);
+
+  const refreshTrackingData = useCallback(async () => {
+    try {
+      const [vList, dList] = await Promise.all([
+        fetchVehicles(),
+        fetchDeliveries(),
+      ]);
+      setVehicles(vList);
+      setDeliveries(dList);
+    } catch (e) {
+      console.warn('Failed to load tracking data:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshTrackingData();
+  }, [refreshTrackingData]);
+
+  const refreshNotificationCount = useCallback(async () => {
+    try {
+      const cnt = await fetchUnreadCount();
+      setUnreadAlertCount(cnt);
+    } catch (e) {
+      console.warn('Failed to fetch unread alert count:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshNotificationCount();
+  }, [refreshNotificationCount]);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    const unsubscribe = subscribeToOfflineQueue((drafts) => {
+      setOfflineDraftsCount(drafts.length);
+    });
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      unsubscribe();
+    };
+  }, []);
+
   const originShort = originGeo.name.split(' (')[0];
   const destShort = destinationGeo.name.split(' (')[0];
   const isSameEndpoint =
@@ -349,10 +477,21 @@ export function App() {
               <Navigation className="w-3.5 h-3.5" />
             </div>
             <span className="text-sm font-semibold tracking-tight text-white">
-              SmartRoute
+              {t.brandTitle}
             </span>
           </div>
-          <span className="text-xs text-zinc-500">Meghalaya · NER</span>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+              title="Toggle Language / भाषा बदलें"
+            >
+              <Globe className="w-3.5 h-3.5 text-zinc-400" />
+              <span>{language === 'en' ? 'हिन्दी (HI)' : 'English (EN)'}</span>
+            </button>
+            <span className="text-xs text-zinc-500 hidden sm:inline">Meghalaya · NER</span>
+          </div>
         </header>
 
         {/* Centered Hero */}
@@ -380,10 +519,10 @@ export function App() {
 
           <div className="space-y-3">
             <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white leading-snug">
-              Logistics route planning, simplified.
+              {t.welcomeTitle}
             </h1>
             <p className="text-sm sm:text-base text-zinc-400 max-w-md mx-auto leading-relaxed">
-              Select your origin and destination, choose your optimization priority, and compare verified mountain road corridors on the map.
+              {t.welcomeSubtitle}
             </p>
           </div>
 
@@ -391,9 +530,9 @@ export function App() {
             <button
               type="button"
               onClick={() => setAppStage('endpoints')}
-              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-medium text-sm transition-all cursor-pointer"
+              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-medium text-sm transition-all cursor-pointer shadow-lg shadow-white/5"
             >
-              <span>Get started</span>
+              <span>{t.planRouteButton}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -422,7 +561,18 @@ export function App() {
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back</span>
           </button>
-          <span className="text-xs font-medium text-zinc-500">Step 1 of 2</span>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[11px] font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+              title="Toggle Language / भाषा बदलें"
+            >
+              <Globe className="w-3 h-3 text-zinc-400" />
+              <span>{language === 'en' ? 'हिन्दी' : 'EN'}</span>
+            </button>
+            <span className="text-xs font-medium text-zinc-500">Step 1 of 2</span>
+          </div>
         </header>
 
         <main className="max-w-xl w-full mx-auto my-auto py-6 space-y-6 animate-wizard-enter">
@@ -532,7 +682,18 @@ export function App() {
               {originShort} → {destShort}
             </span>
           </button>
-          <span className="text-xs font-medium text-zinc-500">Step 2 of 2</span>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[11px] font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+              title="Toggle Language / भाषा बदलें"
+            >
+              <Globe className="w-3 h-3 text-zinc-400" />
+              <span>{language === 'en' ? 'हिन्दी' : 'EN'}</span>
+            </button>
+            <span className="text-xs font-medium text-zinc-500">Step 2 of 2</span>
+          </div>
         </header>
 
         <main className="max-w-xl w-full mx-auto my-auto py-6 space-y-6 animate-wizard-enter">
@@ -744,7 +905,7 @@ export function App() {
           onSelectRoute={(id) => setSelectedRouteId(id)}
           facilities={DEFAULT_FACILITIES}
           activeInfraCategories={DEFAULT_ACTIVE_INFRA}
-          alerts={DEFAULT_ALERTS}
+          alerts={alerts}
           radar={INITIAL_RADAR}
           onToggleRadarActive={() => {}}
           onToggleRadarPlay={() => {}}
@@ -754,16 +915,48 @@ export function App() {
           routeError={routeError}
           demandZones={demandZonesData}
           showDemandZones={showDemandZonesOverlay}
+          roadSegments={roadSegments}
+          fieldIncidents={fieldIncidents}
+          showAccessibilityOverlay={true}
+          vehicles={vehicles}
+          deliveries={deliveries}
+          showVehiclesOverlay={true}
         />
+
+        {/* Floating Unified GIS Intelligence Status Pill */}
+        <div className="absolute top-4 left-4 z-[1000] hidden md:flex items-center gap-2 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-xl shadow-lg border border-slate-200/80 text-xs text-slate-700 select-none">
+          <div className="flex items-center gap-1.5 font-bold text-slate-900">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>NER GIS</span>
+          </div>
+          <span className="text-slate-300">·</span>
+          <span>21,764 OSM Nodes</span>
+          <span className="text-slate-300">·</span>
+          <span>{alerts.length} Advisories</span>
+          <span className="text-slate-300">·</span>
+          <span>{vehicles.length} Fleet</span>
+          <span className="text-slate-300">·</span>
+          <span className="flex items-center gap-1">
+            {isOnline ? (
+              <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> {t.online}
+              </span>
+            ) : (
+              <span className="text-amber-700 font-semibold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> {t.offline} ({offlineDraftsCount})
+              </span>
+            )}
+          </span>
+        </div>
       </div>
 
       {/* Right Area: Minimalist Side Sheet */}
       <aside className="w-full h-[48vh] lg:h-full lg:w-[400px] xl:w-[420px] bg-white border-t lg:border-t-0 lg:border-l border-slate-200 flex flex-col z-20 animate-panel-enter">
         {/* Sheet Header */}
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
+        <div className="px-4 py-3.5 border-b border-slate-100 flex items-center justify-between shrink-0">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
-              <span>Route summary</span>
+              <span>{t.recommendedRoute}</span>
               <span>·</span>
               <span>{mission.vehicle}</span>
             </div>
@@ -772,14 +965,86 @@ export function App() {
             </h2>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setAppStage('endpoints')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition-colors shrink-0 cursor-pointer"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Change</span>
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Language Toggle */}
+            <button
+              type="button"
+              onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
+              className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors border border-slate-200 cursor-pointer"
+              title="Toggle Language / भाषा बदलें"
+            >
+              <Globe className="w-3.5 h-3.5 text-slate-600" />
+              <span>{language === 'en' ? 'हिन्दी' : 'EN'}</span>
+            </button>
+
+            {/* Offline Sync Queue */}
+            <button
+              type="button"
+              onClick={() => setIsOfflineQueueOpen(true)}
+              className={`relative inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors border cursor-pointer ${
+                offlineDraftsCount > 0
+                  ? 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-300'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+              }`}
+              title="Offline Drafts & Sync Queue"
+            >
+              {isOnline ? (
+                <Wifi className="w-3.5 h-3.5 text-emerald-600" />
+              ) : (
+                <WifiOff className="w-3.5 h-3.5 text-amber-600" />
+              )}
+              {offlineDraftsCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-amber-500 text-white font-mono text-[9px] font-bold flex items-center justify-center -mr-0.5">
+                  {offlineDraftsCount}
+                </span>
+              )}
+            </button>
+
+            {/* Alerts Center */}
+            <button
+              type="button"
+              onClick={() => setIsNotificationModalOpen(true)}
+              className="relative inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition-colors cursor-pointer"
+              title="Operational Alerts & Notification Center"
+            >
+              <Bell className="w-3.5 h-3.5 text-slate-700" />
+              {unreadAlertCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-rose-500 text-white font-mono text-[9px] font-bold flex items-center justify-center -mr-0.5">
+                  {unreadAlertCount}
+                </span>
+              )}
+            </button>
+
+            {/* Cargo Dispatch */}
+            <button
+              type="button"
+              onClick={() => setIsNewDeliveryModalOpen(true)}
+              className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-medium transition-colors border border-sky-200 cursor-pointer"
+              title="Dispatch cargo delivery along active route"
+            >
+              <Truck className="w-3.5 h-3.5 text-sky-600" />
+            </button>
+
+            {/* Field Incident Report */}
+            <button
+              type="button"
+              onClick={() => setIsFieldReportModalOpen(true)}
+              className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-medium transition-colors border border-rose-200 cursor-pointer"
+              title="Report road blockage, landslide, or damage"
+            >
+              <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+            </button>
+
+            {/* Change Endpoints */}
+            <button
+              type="button"
+              onClick={() => setAppStage('endpoints')}
+              className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition-colors cursor-pointer"
+              title={t.changeRoute}
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* Scrollable Sheet Body */}
@@ -908,6 +1173,33 @@ export function App() {
                 <p className="text-xs text-slate-600 leading-relaxed pt-2 border-t border-slate-200/60">
                   {activeEval?.tradeoffNote || selectedRoute.tradeoffs}
                 </p>
+
+                {/* Weather & Disruptions Intelligence Row */}
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/60">
+                  <div className="p-2 rounded-xl bg-white border border-slate-200/80 space-y-0.5 text-left">
+                    <div className="text-[10px] text-slate-400 font-medium">Corridor Weather</div>
+                    <div className="text-xs font-semibold text-slate-800 truncate">
+                      {selectedRoute.weather?.corridor_metrics
+                        ? `${selectedRoute.weather.corridor_metrics.mean_temperature_c}°C · ${selectedRoute.weather.corridor_metrics.max_rain_probability_pct}% rain`
+                        : 'Open-Meteo model'}
+                    </div>
+                    <div className="text-[10px] text-slate-500 truncate">
+                      {selectedRoute.weather?.guidance ?? 'Live numerical forecast'}
+                    </div>
+                  </div>
+
+                  <div className="p-2 rounded-xl bg-white border border-slate-200/80 space-y-0.5 text-left">
+                    <div className="text-[10px] text-slate-400 font-medium">Road Advisories</div>
+                    <div className="text-xs font-semibold text-slate-800 truncate">
+                      {selectedRoute.disruptions?.status === 'clear'
+                        ? '100% Clear Corridor'
+                        : `${selectedRoute.disruptions?.intersected_count ?? 0} Active Advisory`}
+                    </div>
+                    <div className="text-[10px] text-slate-500 truncate">
+                      {selectedRoute.disruptions?.explanation ?? 'Verified NHIDCL/PWD advisories'}
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Route Candidates Selector */}
@@ -1037,6 +1329,40 @@ export function App() {
                           />
                         </div>
                       </div>
+
+                      {typeof activeEval.weatherExposureScore === 'number' && (
+                        <div>
+                          <div className="flex justify-between text-slate-600 mb-1">
+                            <span>Weather corridor safety</span>
+                            <span className="font-medium text-slate-900">
+                              {activeEval.weatherExposureScore}/100
+                            </span>
+                          </div>
+                          <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-sky-600 rounded-full"
+                              style={{ width: `${activeEval.weatherExposureScore}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {typeof activeEval.confirmedDisruptionsScore === 'number' && (
+                        <div>
+                          <div className="flex justify-between text-slate-600 mb-1">
+                            <span>Disruption-free corridor score</span>
+                            <span className="font-medium text-slate-900">
+                              {activeEval.confirmedDisruptionsScore}/100
+                            </span>
+                          </div>
+                          <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-emerald-600 rounded-full"
+                              style={{ width: `${activeEval.confirmedDisruptionsScore}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {activeEval.advantages.length > 0 && (
@@ -1044,7 +1370,7 @@ export function App() {
                         <div className="text-[11px] font-medium text-emerald-700">
                           Why selected / Strengths
                         </div>
-                        {activeEval.advantages.slice(0, 2).map((adv, idx) => (
+                        {activeEval.advantages.slice(0, 3).map((adv, idx) => (
                           <div
                             key={idx}
                             className="text-[11px] text-slate-600 leading-snug"
@@ -1060,7 +1386,7 @@ export function App() {
                         <div className="text-[11px] font-medium text-amber-700">
                           Trade-offs / Limitations
                         </div>
-                        {activeEval.disadvantages.slice(0, 2).map((dis, idx) => (
+                        {activeEval.disadvantages.slice(0, 3).map((dis, idx) => (
                           <div
                             key={idx}
                             className="text-[11px] text-slate-600 leading-snug"
@@ -1088,9 +1414,13 @@ export function App() {
                       <div className="font-medium text-slate-600">
                         Unavailable metrics (excluded from score)
                       </div>
-                      <div>• Weather exposure: Unavailable (Phase 3)</div>
-                      <div>• Confirmed road disruptions: Unavailable (Phase 3/4)</div>
-                      <div>• Live traffic telemetry: Unavailable</div>
+                      {typeof activeEval.weatherExposureScore !== 'number' && (
+                        <div>• Weather exposure: Atmospheric station unreachable</div>
+                      )}
+                      {typeof activeEval.confirmedDisruptionsScore !== 'number' && (
+                        <div>• Confirmed road disruptions: Advisory feed unreachable</div>
+                      )}
+                      <div>• Live traffic telemetry: Unavailable in backend dataset</div>
                     </div>
 
                     <div className="text-[11px] text-slate-400 leading-normal">
@@ -1106,7 +1436,15 @@ export function App() {
           <div className="border-t border-slate-100 pt-3">
             <button
               type="button"
-              onClick={() => setShowDemandSection((prev) => !prev)}
+              onClick={() => {
+                setShowDemandSection((prev) => {
+                  const next = !prev;
+                  if (next && !demandZonesData && !isDemandZonesLoading) {
+                    loadDemandZones(demandClusterCount, 42);
+                  }
+                  return next;
+                });
+              }}
               className="w-full py-1.5 flex items-center justify-between text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
             >
               <span>Demand zones overlay (K-Means)</span>
@@ -1164,8 +1502,22 @@ export function App() {
                 </div>
 
                 {demandZonesError && (
-                  <div className="text-xs text-rose-600">
-                    {demandZonesError.detail}
+                  <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-700 space-y-2">
+                    <p>{demandZonesError.detail}</p>
+                    <button
+                      type="button"
+                      onClick={() => loadDemandZones(demandClusterCount, 42)}
+                      disabled={isDemandZonesLoading}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-rose-600 text-white font-medium hover:bg-rose-700 disabled:opacity-50 cursor-pointer"
+                    >
+                      {isDemandZonesLoading ? 'Connecting...' : 'Retry loading demand zones'}
+                    </button>
+                  </div>
+                )}
+
+                {isDemandZonesLoading && !demandZonesData && !demandZonesError && (
+                  <div className="py-2 text-center text-xs text-slate-500 animate-pulse">
+                    Computing K-Means demand zones (EPSG:32646)...
                   </div>
                 )}
 
@@ -1340,8 +1692,119 @@ export function App() {
               </div>
             )}
           </div>
+
+          {/* Progressive Drawer 4: Road Accessibility & Field Reports (Module D & E) */}
+          <div className="border-t border-slate-100 pt-3">
+            <button
+              type="button"
+              onClick={() => setShowAccessibilitySection((prev) => !prev)}
+              className="w-full py-1.5 flex items-center justify-between text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+            >
+              <span className="flex items-center gap-1.5">
+                <ShieldAlert className="w-3.5 h-3.5 text-rose-500" />
+                <span>Road Accessibility & Field Intelligence</span>
+              </span>
+              {showAccessibilitySection ? (
+                <ChevronUp className="w-4 h-4 text-slate-400" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-slate-400" />
+              )}
+            </button>
+
+            {showAccessibilitySection && (
+              <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200/70 space-y-3 text-xs animate-step-enter">
+                <AccessibilityMonitorPanel
+                  onSelectSegment={(seg) => {
+                    if (seg.coordinates && seg.coordinates[0]) {
+                      setFocusTarget([seg.coordinates[0][0], seg.coordinates[0][1]]);
+                    }
+                  }}
+                  onSelectIncident={(inc) => {
+                    setFocusTarget([inc.latitude, inc.longitude]);
+                  }}
+                  onRequestNewReport={() => setIsFieldReportModalOpen(true)}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Progressive Drawer 5: GPS Fleet & Delivery Tracking (Module F) */}
+          <div className="border-t border-slate-100 pt-3">
+            <button
+              type="button"
+              onClick={() => setShowTrackingSection((prev) => !prev)}
+              className="w-full py-1.5 flex items-center justify-between text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+            >
+              <span className="flex items-center gap-1.5">
+                <Truck className="w-3.5 h-3.5 text-sky-600" />
+                <span>GPS Fleet & Delivery Tracking</span>
+              </span>
+              {showTrackingSection ? (
+                <ChevronUp className="w-4 h-4 text-slate-400" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-slate-400" />
+              )}
+            </button>
+
+            {showTrackingSection && (
+              <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200/70 space-y-3 text-xs animate-step-enter">
+                <TrackingMonitorPanel
+                  onSelectVehicle={(veh) => {
+                    if (veh.current_latitude !== null && veh.current_longitude !== null) {
+                      setFocusTarget([veh.current_latitude, veh.current_longitude]);
+                    }
+                  }}
+                  onSelectDelivery={(del) => {
+                    setFocusTarget([del.origin_lat, del.origin_lng]);
+                  }}
+                  onRequestNewDelivery={() => setIsNewDeliveryModalOpen(true)}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </aside>
+
+      {/* Field Report Submission Modal (Module E) */}
+      <FieldReportModal
+        isOpen={isFieldReportModalOpen}
+        onClose={() => setIsFieldReportModalOpen(false)}
+        defaultCoords={originGeo ? [originGeo.lat, originGeo.lng] : undefined}
+        defaultLocationName={originGeo ? originGeo.name.split(' (')[0] : undefined}
+        onReportSubmitted={() => {
+          refreshAccessibilityData();
+        }}
+      />
+
+      {/* Dispatch New Delivery Mission Modal (Module F) */}
+      <NewDeliveryModal
+        isOpen={isNewDeliveryModalOpen}
+        onClose={() => setIsNewDeliveryModalOpen(false)}
+        vehicles={vehicles}
+        activeRoute={selectedRoute ?? recommendedRoute}
+        originName={originShort}
+        destinationName={destShort}
+        onDeliveryCreated={() => {
+          refreshTrackingData();
+        }}
+      />
+
+      {/* Operational Alerts & Notification Center Modal (Module G) */}
+      <NotificationCenterModal
+        isOpen={isNotificationModalOpen}
+        onClose={() => setIsNotificationModalOpen(false)}
+        onFocusLocation={(coords) => setFocusTarget(coords)}
+        onUnreadCountChange={(cnt) => setUnreadAlertCount(cnt)}
+      />
+
+      {/* Offline Drafts & Sync Queue Modal (Module H / Phase 7) */}
+      <OfflineQueueModal
+        isOpen={isOfflineQueueOpen}
+        onClose={() => setIsOfflineQueueOpen(false)}
+        onSyncComplete={() => {
+          refreshAccessibilityData();
+        }}
+      />
     </div>
   );
 }

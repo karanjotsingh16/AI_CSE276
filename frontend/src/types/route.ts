@@ -88,6 +88,8 @@ export interface RouteEvaluationBreakdown {
   tradeoffNote: string;
   algorithmDisclosure: string;
   unavailableMetrics: UnavailableMetricInfo[];
+  weatherExposureScore?: number | null;
+  confirmedDisruptionsScore?: number | null;
   mlRanking?: BackendMlRankingInfo;
 }
 
@@ -119,6 +121,8 @@ export interface BackendSingleRoute {
   estimation_limitations?: string[];
   merged_route_types?: string[];
   edge_summary?: BackendEdgeSummary;
+  weather?: Record<string, any>;
+  disruptions?: Record<string, any>;
   geometry: BackendGeoJSONLineString;
 }
 
@@ -142,6 +146,8 @@ export interface BackendRouteCalculationResponse {
   alternatives?: BackendSingleRoute[];
   evaluation?: Record<string, unknown>;
   ml_ranking?: BackendMlRankingInfo;
+  weather_summary?: Record<string, any>;
+  disruptions_summary?: Record<string, any>;
 }
 
 export type RouteErrorCode =
@@ -190,6 +196,8 @@ export interface RouteAlternative {
   mergedRouteTypes?: string[];
   travelTimeDisclaimer?: string;
   edgeSummary?: BackendEdgeSummary;
+  weather?: Record<string, any>;
+  disruptions?: Record<string, any>;
   mlRanking?: BackendMlRankingInfo;
   elevationProfile?: { minMeters: number; maxMeters: number; ascentMeters: number };
   evaluation?: RouteEvaluationBreakdown;

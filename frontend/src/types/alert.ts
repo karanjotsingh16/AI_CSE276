@@ -1,4 +1,4 @@
-export type AlertSeverity = 'Watch' | 'Alert' | 'Warning' | 'Severe';
+export type AlertSeverity = 'Watch' | 'Alert' | 'Warning' | 'Severe' | 'Advisory' | 'Critical';
 
 export type AlertSourceState = 
   | 'loading' 
@@ -17,7 +17,18 @@ export interface DisasterAlert {
   severity: AlertSeverity;
   validUntil: string;
   sourceUrl: string;
-  category: 'Landslide' | 'Heavy Rainfall' | 'Flash Flood' | 'Road Blockage' | 'Fog' | 'General';
+  category:
+    | 'Landslide'
+    | 'Heavy Rainfall'
+    | 'Flash Flood'
+    | 'Road Blockage'
+    | 'Fog'
+    | 'General'
+    | 'Debris Clearance'
+    | 'Bridge Load Limit'
+    | 'Shoulder Repair'
+    | 'Bridge Weight Check'
+    | string;
   description: string;
   intersectsRoute: boolean | null; // null if spatial coordinates unavailable
   lat?: number;

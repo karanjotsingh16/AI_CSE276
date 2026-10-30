@@ -16,6 +16,9 @@ export function getApiBaseUrl(): string {
   if (typeof configured === 'string' && configured.trim().length > 0) {
     return configured.trim().replace(/\/+$/, '');
   }
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return 'http://localhost:8000';
+  }
   return DEFAULT_API_BASE_URL;
 }
 
@@ -147,6 +150,8 @@ function buildRouteAlternative(
     mergedRouteTypes: backendRoute.merged_route_types,
     travelTimeDisclaimer: response.travel_time_disclaimer,
     edgeSummary: backendRoute.edge_summary,
+    weather: backendRoute.weather,
+    disruptions: backendRoute.disruptions,
     mlRanking: response.ml_ranking,
     elevationProfile: {
       minMeters: Math.min(origin.elevationMeters, destination.elevationMeters),

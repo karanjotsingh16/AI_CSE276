@@ -126,9 +126,18 @@ def main() -> None:
     assert bal_top["overall_score"] > bal_second["overall_score"]
     assert bal_top["component_scores"]["time_score"] == 100.0
     assert bal_second["component_scores"]["distance_score"] == 100.0
-    assert bal_top["unavailable_component_scores"]["weather_exposure_score"] is None
-    assert bal_top["unavailable_component_scores"]["confirmed_disruptions_score"] is None
+    # Verify live traffic remains strictly unavailable
     assert bal_top["unavailable_component_scores"]["live_traffic_score"] is None
+    # Weather and disruptions are either evaluated in component_scores or marked unavailable
+    if "weather_exposure_score" in bal_top["component_scores"]:
+        assert 0.0 <= bal_top["component_scores"]["weather_exposure_score"] <= 100.0
+    else:
+        assert bal_top["unavailable_component_scores"]["weather_exposure_score"] is None
+
+    if "confirmed_disruptions_score" in bal_top["component_scores"]:
+        assert 0.0 <= bal_top["component_scores"]["confirmed_disruptions_score"] <= 100.0
+    else:
+        assert bal_top["unavailable_component_scores"]["confirmed_disruptions_score"] is None
 
     print(
         json.dumps(

@@ -14,6 +14,8 @@ from route_scoring import (
     evaluate_candidate_routes,
     summarize_edge_attributes,
 )
+from disruptions_service import DisruptionsService
+from weather_service import WeatherService
 
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_PROCESSED_GRAPH_PATH = (
@@ -26,6 +28,18 @@ MAX_SNAP_DISTANCE_M = 3000.0
 def get_cached_ml_ranker() -> PairwiseRouteRanker:
     """Initialize or load the experimental pairwise route ranker artifact."""
     return PairwiseRouteRanker.load_or_train(random_state=42)
+
+
+@lru_cache(maxsize=1)
+def get_cached_weather_service() -> WeatherService:
+    """Initialize and cache the live weather service."""
+    return WeatherService()
+
+
+@lru_cache(maxsize=1)
+def get_cached_disruptions_service() -> DisruptionsService:
+    """Initialize and cache the regional road disruptions service."""
+    return DisruptionsService()
 
 
 class RouteEngineError(Exception):
@@ -426,12 +440,31 @@ class RouteEngine:
             raw_candidates.append(alt_route)
         unique_alternatives = self.deduplicate_candidate_routes(raw_candidates)
 
+        # Evaluate live corridor weather and verified road disruptions
+        weather_svc = get_cached_weather_service()
+        disruptions_svc = get_cached_disruptions_service()
+
+        weather_evals: dict[str, dict[str, Any]] = {}
+        disruption_evals: dict[str, dict[str, Any]] = {}
+
+        for r_cand in raw_candidates:
+            geom_coords = r_cand.get("geometry", {}).get("coordinates", [])
+            r_type = str(r_cand.get("route_type", "candidate"))
+            w_res = weather_svc.evaluate_route_corridor_weather(geom_coords)
+            d_res = disruptions_svc.evaluate_route_disruptions(geom_coords)
+            weather_evals[r_type] = w_res
+            disruption_evals[r_type] = d_res
+            r_cand["weather"] = w_res
+            r_cand["disruptions"] = d_res
+
         evaluation = evaluate_candidate_routes(
             candidates=raw_candidates,
             preference=preference,
             origin_snap_m=float(origin_snap["snap_distance_m"]),
             destination_snap_m=float(destination_snap["snap_distance_m"]),
             max_snap_distance_m=self.max_snap_distance_m,
+            weather_evaluations=weather_evals,
+            disruption_evaluations=disruption_evals,
         )
 
         ml_ranker = get_cached_ml_ranker()
@@ -443,6 +476,11 @@ class RouteEngine:
         }
         if alt_route is not None:
             routes_dict["alternative_corridor"] = alt_route
+
+        # Primary route summaries for convenient top-level access
+        rec_id = evaluation.get("recommended_route_id", "estimated_fastest")
+        primary_w = weather_evals.get(str(rec_id)) or weather_evals.get("estimated_fastest")
+        primary_d = disruption_evals.get(str(rec_id)) or disruption_evals.get("estimated_fastest")
 
         return {
             "origin": origin_snap,
@@ -463,4 +501,6 @@ class RouteEngine:
             "alternatives": unique_alternatives,
             "evaluation": evaluation,
             "ml_ranking": ml_ranking,
+            "weather_summary": primary_w,
+            "disruptions_summary": primary_d,
         }

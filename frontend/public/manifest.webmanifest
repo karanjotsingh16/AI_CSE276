@@ -1,0 +1,19 @@
+{
+  "name": "NER SmartRoute — AI Logistics & Accessibility Intelligence",
+  "short_name": "NER SmartRoute",
+  "description": "Terrain-aware routing, automated multi-hazard alerts, GPS fleet tracking, and road accessibility intelligence across Meghalaya and North-East India.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

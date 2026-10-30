@@ -286,6 +286,14 @@ export function evaluateAndRankRoutes(
       tradeoffNote,
       algorithmDisclosure: ALGORITHM_DISCLOSURE,
       unavailableMetrics: UNAVAILABLE_ROUTE_METRICS,
+      weatherExposureScore:
+        typeof route.weather?.weather_exposure_score === 'number'
+          ? route.weather.weather_exposure_score
+          : null,
+      confirmedDisruptionsScore:
+        typeof route.disruptions?.confirmed_disruptions_score === 'number'
+          ? route.disruptions.confirmed_disruptions_score
+          : null,
       mlRanking: route.mlRanking
     };
 

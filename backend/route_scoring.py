@@ -325,10 +325,12 @@ def evaluate_candidate_routes(
     origin_snap_m: float = 0.0,
     destination_snap_m: float = 0.0,
     max_snap_distance_m: float = 3000.0,
+    weather_evaluations: dict[str, dict[str, Any]] | None = None,
+    disruption_evaluations: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """
     Deterministically score, compare, and rank candidate routes using measurable
-    evidence extracted from the road graph.
+    evidence extracted from the road graph, live atmospheric forecasts, and verified road advisories.
 
     Handles edge cases:
     - Empty candidate list
@@ -425,33 +427,81 @@ def evaluate_candidate_routes(
             _round2(num_nodes / dist_km) if dist_km > 0 else 0.0
         )
 
+        # Weather exposure evaluation
+        route_weather = (weather_evaluations or {}).get(route_id) or (weather_evaluations or {}).get(route_type)
+        weather_score = (
+            route_weather.get("weather_exposure_score")
+            if isinstance(route_weather, dict)
+            else None
+        )
+
+        # Disruptions evaluation
+        route_disruptions = (disruption_evaluations or {}).get(route_id) or (disruption_evaluations or {}).get(route_type)
+        disruption_score = (
+            route_disruptions.get("confirmed_disruptions_score")
+            if isinstance(route_disruptions, dict)
+            else None
+        )
+
+        comp_scores: dict[str, Any] = {
+            "distance_score": dist_score,
+            "time_score": time_score,
+            "road_hierarchy_score": hierarchy_score,
+            "snap_quality_score": snap_score,
+            "completeness_score": _round1(
+                _clamp(
+                    100.0
+                    - (
+                        100.0
+                        * float(edge_summary.get("imputed_highway_edges_count", 0))
+                        / max(1, int(edge_summary.get("total_edges", 1)))
+                    )
+                )
+            ),
+        }
+        if weather_score is not None:
+            comp_scores["weather_exposure_score"] = weather_score
+        if disruption_score is not None:
+            comp_scores["confirmed_disruptions_score"] = disruption_score
+
+        unavail_scores: dict[str, Any] = {
+            "live_traffic_score": None,
+        }
+        if weather_score is None:
+            unavail_scores["weather_exposure_score"] = None
+        if disruption_score is None:
+            unavail_scores["confirmed_disruptions_score"] = None
+
+        cand_advantages: list[str] = []
+        cand_disadvantages: list[str] = []
+
+        if route_disruptions and isinstance(route_disruptions, dict):
+            intersected = route_disruptions.get("intersected_disruptions", [])
+            if not intersected and route_disruptions.get("status") == "clear":
+                cand_advantages.append(
+                    "Corridor is 100% clear of all active regional road maintenance advisories."
+                )
+            for d_item in intersected:
+                cand_disadvantages.append(
+                    f"Intersects {d_item.get('title')} ({d_item.get('severity', '').upper()}): {d_item.get('description')}"
+                )
+
+        if route_weather and isinstance(route_weather, dict):
+            haz = route_weather.get("hazard_level")
+            guidance = route_weather.get("guidance", "")
+            if haz == "low":
+                cand_advantages.append(f"Corridor weather: {guidance}")
+            elif haz == "high":
+                cand_disadvantages.append(f"Adverse weather condition: {guidance}")
+
         scored_entries.append(
             {
                 "route_id": route_id,
                 "route_type": route_type,
                 "rank": 1,
                 "overall_score": overall_score,
-                "component_scores": {
-                    "distance_score": dist_score,
-                    "time_score": time_score,
-                    "road_hierarchy_score": hierarchy_score,
-                    "snap_quality_score": snap_score,
-                    "completeness_score": _round1(
-                        _clamp(
-                            100.0
-                            - (
-                                100.0
-                                * float(edge_summary.get("imputed_highway_edges_count", 0))
-                                / max(1, int(edge_summary.get("total_edges", 1)))
-                            )
-                        )
-                    ),
-                },
-                "unavailable_component_scores": {
-                    "weather_exposure_score": None,
-                    "confirmed_disruptions_score": None,
-                    "live_traffic_score": None,
-                },
+                "component_scores": comp_scores,
+                "unavailable_component_scores": unavail_scores,
                 "evidence": {
                     "distance_km": _round2(dist_km),
                     "estimated_duration_min": _round1(dur_min),
@@ -474,8 +524,8 @@ def evaluate_candidate_routes(
                     "bridges_count": int(edge_summary.get("bridges_count", 0)),
                     "tunnels_count": int(edge_summary.get("tunnels_count", 0)),
                 },
-                "advantages": [],
-                "disadvantages": [],
+                "advantages": cand_advantages,
+                "disadvantages": cand_disadvantages,
             }
         )
 
