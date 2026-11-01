@@ -145,6 +145,15 @@ Frontend components are modularized into dedicated directories under `components
 
 ## 7. Change Log (newest first)
 
+### 2026-11-01 (Documentation Update: Root README.md Aligned with Modular Architecture)
+- `README.md`: completely synchronized and updated with the organized modular codebase structure:
+  - Added direct link and overview for the interactive animated visualizer ([`docs/arch.html`](file:///d:/AI%20and%20ML%20Project/docs/arch.html)).
+  - Updated architectural ASCII block diagram to show `backend/core/`, `backend/services/`, `backend/scripts/`, `backend/tests/`, and `frontend/src/components/{modals,panels,map,common,legacy}/`.
+  - Updated Module Matrix with organized package paths and clickable links.
+  - Updated Quickstart commands for single-command regression test execution (`run_all_tests.py`), individual test paths, and visualizer server instructions.
+  - Rewrote Project File Structure section reflecting the clean modular file tree and compatibility shims.
+- **Verified:** All links valid, Markdown formatting validated, backend tests 100% pass, frontend build & lint 0 errors.
+
 ### 2026-11-01 (Interactive System Architecture & Animated Workflow Visualizer)
 - `docs/arch.html` & `docs/index.html`: created self-contained, interactive HTML visualizer with Mermaid 11 animations explaining the whole NER SmartRoute system at one place.
   - **Animated Pipeline Simulation:** Step-by-step playback with glowing node pulses and streaming telemetry ticker across 10 stages (User Search → Snapping → Dijkstra → Environmental Enrichment → Explainable Scoring → ML Ranking → Dispatch → Telemetry → Deviation Check → Multi-Hazard Alerts).

@@ -3,7 +3,8 @@
 > **Autonomous Terrain-Aware Logistics, Multi-Hazard Alerting, Fleet Tracking & Accessibility Intelligence for North-East India (Meghalaya Pilot)**  
 > **Challenge:** Smart India Hackathon (SIH) 26002 — AI Logistics & Accessibility Intelligence  
 > **Course / Track:** CSE276  
-> **Pilot Geographic Focus:** Meghalaya (Shillong, Sohra, Mairang, Dawki) & 8-State North Eastern Region (NER)
+> **Pilot Geographic Focus:** Meghalaya (Shillong, Sohra, Mairang, Dawki) & 8-State North Eastern Region (NER)  
+> **Interactive Visualizer:** [`docs/arch.html`](file:///d:/AI%20and%20ML%20Project/docs/arch.html) (Live animated system workflows & flowcharts)
 
 ---
 
@@ -15,13 +16,13 @@ North-East India faces unique logistics, disaster vulnerability, and accessibili
 * **Intermittent Cellular Coverage:** Deep river gorges and mountain passes often have zero mobile signal, rendering cloud-only logistics apps inoperable for field crews and drivers.
 * **Fragile Critical Infrastructure:** Single-lane bridges and spillway decks have strict axle weight restrictions, making real-time accessibility intelligence essential for emergency medical and relief transport.
 
-**NER SmartRoute** addresses these challenges with an end-to-end GIS platform combining **deterministic graph algorithms**, **machine learning route ranking**, **numerical weather integration**, **field-verified road accessibility auditing**, **GPS fleet tracking**, **automated hazard alerts**, and **offline-first PWA sync queues**.
+**NER SmartRoute** addresses these challenges with an end-to-end GIS platform combining **deterministic graph algorithms**, **machine learning route ranking**, **numerical weather integration**, **field-verified road accessibility auditing**, **GPS fleet tracking**, **automated hazard alerts**, **offline-first PWA sync queues**, and **animated interactive architectural visualizers**.
 
 ---
 
 ## 2. System Architecture & Module Breakdown
 
-```
+```text
 +----------------------------------------------------------------------------------------------------+
 |                                    NER SmartRoute Architecture                                     |
 +----------------------------------------------------------------------------------------------------+
@@ -31,28 +32,39 @@ North-East India faces unique logistics, disaster vulnerability, and accessibili
 ┌──────────────────────────────────────────┐                         ┌──────────────────────────────────────────┐
 │      FastAPI Backend Engine (Python)     │                         │        Frontend Web App (React 19)       │
 ├──────────────────────────────────────────┤                         ├──────────────────────────────────────────┤
-│ • Module A: OSMnx/NetworkX Shortest Path │                         │ • Minimalist 5-Stage Mission Wizard      │
-│ • Module B: Pairwise Route-Ranking ML    │  HTTP / REST / JSON     │ • Interactive Leaflet Vector GIS Map     │
-│ • Module C: Open-Meteo & Advisories      │ ◄─────────────────────► │ • Bilingual i18n Toggle (English / हिंदी)│
-│ • Module D & E: Accessibility & Reports  │  CORS: localhost:5173/4 │ • PWA Service Worker & Offline Sync      │
-│ • Module F: GPS Fleet & Deviation Engine │                         │ • Notification Center & Dispatch Drawers │
-│ • Module G: Multi-Hazard Deduplication   │                         │ • Explainable Scoring Breakdown Drawers  │
-│ • Module H: SQLite Persistence Layer     │                         │ • K-Means Projected Cluster Overlay      │
+│ • core/: Dijkstra, ML, K-Means, OSRM     │                         │ • Minimalist 5-Stage Mission Wizard      │
+│ • services/: Accessibility, GPS, Alerts  │  HTTP / REST / JSON     │ • Interactive Leaflet Vector GIS Map     │
+│ • scripts/: OSM Download & Preprocessing │ ◄─────────────────────► │ • Bilingual i18n Toggle (English / हिंदी)│
+│ • tests/: 11 Automated Test Suites       │  CORS: localhost:5173/4 │ • PWA Service Worker & Offline Sync      │
+│ • SQLite: accessibility, tracking, alerts│                         │ • Modular Drawers & Modal Dialogs        │
+│ • 100% Backward Compatibility Shims      │                         │ • Component Directory Modularization     │
 └──────────────────────────────────────────┘                         └──────────────────────────────────────────┘
+                                                  │
+                                                  ▼
+                         ┌──────────────────────────────────────────────────┐
+                         │   Interactive Animated Architecture Visualizer   │
+                         │             (docs/arch.html)                     │
+                         ├──────────────────────────────────────────────────┤
+                         │ • 10-Stage Animated Pipeline Simulator           │
+                         │ • 6 Dedicated Interactive Mermaid Flowcharts     │
+                         │ • Deep-Dive Technical Component Inspector        │
+                         │ • Explainable AI Preference Weight Simulator     │
+                         └──────────────────────────────────────────────────┘
 ```
 
 ### Module Matrix
 
-| Module | Purpose | Key Technologies & Files |
+| Module | Purpose | Organized Subpackage & Implementation Files |
 |---|---|---|
-| **Module A** | **Intelligent Route Optimization** | OSMnx, NetworkX Dijkstra, 21,764 road nodes, 8-state catalog ([`route_engine.py`](file:///d:/AI%20and%20ML%20Project/backend/route_engine.py), [`region_manager.py`](file:///d:/AI%20and%20ML%20Project/backend/region_manager.py)) |
-| **Module B** | **Route-Ranking Machine Learning** | Scikit-learn, Pairwise Logistic Ranker, GroupShuffleSplit 60/20/20 ([`route_ranking_ml.py`](file:///d:/AI%20and%20ML%20Project/backend/route_ranking_ml.py)) |
-| **Module C** | **Weather Intelligence & Disruptions** | Open-Meteo WMO numerical weather, spatial corridor intersection ([`weather_service.py`](file:///d:/AI%20and%20ML%20Project/backend/weather_service.py), [`disruptions_service.py`](file:///d:/AI%20and%20ML%20Project/backend/disruptions_service.py)) |
-| **Module D** | **Road Accessibility Monitoring** | SQLite `accessibility.db`, 6 regional arterial segments, bridge load limits ([`accessibility_service.py`](file:///d:/AI%20and%20ML%20Project/backend/accessibility_service.py)) |
-| **Module E** | **Field Incident Reporting & Workflow** | Geo-tagged incident submission, photo validation, admin audit trail ([`FieldReportModal.tsx`](file:///d:/AI%20and%20ML%20Project/frontend/src/components/FieldReportModal.tsx)) |
-| **Module F** | **GPS Vehicle & Delivery Tracking** | SQLite `tracking.db`, fleet telemetry, >500m off-corridor deviation detection, simulated stepping ([`tracking_service.py`](file:///d:/AI%20and%20ML%20Project/backend/tracking_service.py)) |
-| **Module G** | **Automated Alerts & Notifications** | SQLite `alerts.db`, compound SHA-256 deduplication hashing, cross-service triggers ([`alerts_service.py`](file:///d:/AI%20and%20ML%20Project/backend/alerts_service.py)) |
-| **Module H** | **Multilingual i18n, PWA & Offline Sync** | Typed dictionary (EN / HI), `localStorage` persistent draft queue, Service Worker, Manifest ([`offlineQueueService.ts`](file:///d:/AI%20and%20ML%20Project/frontend/src/services/offlineQueueService.ts)) |
+| **Module A** | **Intelligent Route Optimization** | `backend/core/` ([`route_engine.py`](file:///d:/AI%20and%20ML%20Project/backend/core/route_engine.py), [`route_scoring.py`](file:///d:/AI%20and%20ML%20Project/backend/core/route_scoring.py), [`region_manager.py`](file:///d:/AI%20and%20ML%20Project/backend/core/region_manager.py)) |
+| **Module B** | **Route-Ranking Machine Learning** | `backend/core/` ([`route_ranking_ml.py`](file:///d:/AI%20and%20ML%20Project/backend/core/route_ranking_ml.py), [`demand_clustering.py`](file:///d:/AI%20and%20ML%20Project/backend/core/demand_clustering.py)) |
+| **Module C** | **Weather Intelligence & Disruptions** | `backend/services/` ([`weather_service.py`](file:///d:/AI%20and%20ML%20Project/backend/services/weather_service.py), [`disruptions_service.py`](file:///d:/AI%20and%20ML%20Project/backend/services/disruptions_service.py)) |
+| **Module D** | **Road Accessibility Monitoring** | `backend/services/` ([`accessibility_service.py`](file:///d:/AI%20and%20ML%20Project/backend/services/accessibility_service.py), `data/accessibility.db`) |
+| **Module E** | **Field Incident Reporting & Workflow** | `frontend/src/components/modals/` ([`FieldReportModal.tsx`](file:///d:/AI%20and%20ML%20Project/frontend/src/components/modals/FieldReportModal.tsx), `panels/` [`AccessibilityMonitorPanel.tsx`](file:///d:/AI%20and%20ML%20Project/frontend/src/components/panels/AccessibilityMonitorPanel.tsx)) |
+| **Module F** | **GPS Vehicle & Delivery Tracking** | `backend/services/` ([`tracking_service.py`](file:///d:/AI%20and%20ML%20Project/backend/services/tracking_service.py), `data/tracking.db`, `panels/` [`TrackingMonitorPanel.tsx`](file:///d:/AI%20and%20ML%20Project/frontend/src/components/panels/TrackingMonitorPanel.tsx)) |
+| **Module G** | **Automated Alerts & Notifications** | `backend/services/` ([`alerts_service.py`](file:///d:/AI%20and%20ML%20Project/backend/services/alerts_service.py), `data/alerts.db`, `modals/` [`NotificationCenterModal.tsx`](file:///d:/AI%20and%20ML%20Project/frontend/src/components/modals/NotificationCenterModal.tsx)) |
+| **Module H** | **Multilingual i18n, PWA & Offline Sync** | `frontend/src/i18n/`, `services/` ([`offlineQueueService.ts`](file:///d:/AI%20and%20ML%20Project/frontend/src/services/offlineQueueService.ts), `modals/` [`OfflineQueueModal.tsx`](file:///d:/AI%20and%20ML%20Project/frontend/src/components/modals/OfflineQueueModal.tsx)) |
+| **Interactive Docs** | **Animated System Architecture Visualizer** | `docs/` ([`arch.html`](file:///d:/AI%20and%20ML%20Project/docs/arch.html), [`index.html`](file:///d:/AI%20and%20ML%20Project/docs/index.html), [`ARCHITECTURE.md`](file:///d:/AI%20and%20ML%20Project/docs/ARCHITECTURE.md)) |
 
 ---
 
@@ -61,8 +73,8 @@ North-East India faces unique logistics, disaster vulnerability, and accessibili
 To uphold scientific integrity and academic guidelines (CSE276 / SIH 26002):
 
 1. **Deterministic Routing vs. Machine Learning:**
-   * Primary route pathfinding is computed deterministically via **NetworkX Dijkstra** on OpenStreetMap road graphs (`shillong_roads_clean.graphml`).
-   * The **PairwiseRouteRanker** is an experimental evaluation model trained on feature differences using scikit-learn Logistic Regression and evaluated with query-grouped splits (`GroupShuffleSplit` 60/20/20). It does not alter verified graph geometries.
+   * Primary route pathfinding is computed deterministically via **NetworkX Dijkstra** on OpenStreetMap road graphs (`shillong_roads_clean.graphml`, 21,764 nodes, 53,888 edges).
+   * The **PairwiseRouteRanker** is an experimental evaluation model trained on 11-dimension differential feature vectors ($\Delta x = x_A - x_B$) using scikit-learn Logistic Regression and evaluated with query-grouped splits (`GroupShuffleSplit` 60/20/20 grouped by origin-destination OD-pair). It does not alter verified graph geometries.
 2. **Static Travel Times (No Live Traffic Fabrication):**
    * Travel durations are static estimates derived from OSM highway classification speed imputation (`trunk`: 50 km/h, `primary`: 40 km/h, `secondary`: 30 km/h, `tertiary`: 25 km/h, `unclassified`: 20 km/h).
    * Live traffic scoring is strictly disabled and transparently marked as `None` / unavailable.
@@ -80,11 +92,12 @@ To uphold scientific integrity and academic guidelines (CSE276 / SIH 26002):
 
 | Layer | Technologies |
 |---|---|
-| **Frontend** | React 19, TypeScript, Vite, Tailwind CSS v4, Leaflet GIS, Lucide React, Oxlint |
+| **Frontend** | React 19, TypeScript, Vite 8, Tailwind CSS v4, Leaflet GIS, Lucide React, Oxlint |
 | **Backend** | Python 3.12, FastAPI, Uvicorn, OSMnx, NetworkX, Scikit-learn, Scipy, NumPy, HTTPX, Pydantic v2 |
 | **Databases** | SQLite (`accessibility.db`, `tracking.db`, `alerts.db`), OpenStreetMap GraphML |
-| **APIs Integrated** | Open-Meteo WMO 0.25° Seamless Numerical Model, Nominatim Geocoder (rate-limited & disk-cached) |
+| **APIs Integrated** | Open-Meteo WMO 0.25° Numerical Weather Model, Nominatim Geocoder (rate-limited & disk-cached) |
 | **PWA & Offline** | Web App Manifest, Service Worker (`sw.js`), LocalStorage persistent incident draft queue |
+| **Documentation & Visualizer** | Interactive HTML5 Visualizer (`docs/arch.html`), Mermaid 11, KaTeX mathematical typography |
 
 ---
 
@@ -98,10 +111,10 @@ To uphold scientific integrity and academic guidelines (CSE276 / SIH 26002):
 ### Step 1: Start the FastAPI Backend
 ```powershell
 Set-Location "d:\AI and ML Project\backend"
-.\.venv\Scripts\uvicorn.exe main:app --host 127.0.0.1 --port 8000 --reload
+& ".\.venv\Scripts\uvicorn.exe" main:app --host 127.0.0.1 --port 8000 --reload
 ```
-* Interactive API Documentation (Swagger): `http://127.0.0.1:8000/docs`
-* Health Check: `http://127.0.0.1:8000/health`
+* **Interactive API Documentation (Swagger):** `http://127.0.0.1:8000/docs`
+* **Health Check Endpoint:** `http://127.0.0.1:8000/health`
 
 ### Step 2: Start the Frontend Application
 ```powershell
@@ -109,31 +122,40 @@ Set-Location "d:\AI and ML Project\frontend"
 npm install
 npm run dev -- --host 127.0.0.1
 ```
-* Application URL: `http://127.0.0.1:5174/` (or `5173`)
+* **Application URL:** `http://127.0.0.1:5174/` (or `5173`)
 
 ### Step 3: Run Full Backend Regression Tests
 ```powershell
 Set-Location "d:\AI and ML Project\backend"
 .\.venv\Scripts\python.exe run_all_tests.py
 ```
-Or run individual test suites:
+*(All 9 test suites execute and pass 100% in ~48s).*
+
+Or run individual test suites from `backend/tests/` or via top-level shims:
 ```powershell
-.\.venv\Scripts\python.exe test_alerts_system.py
-.\.venv\Scripts\python.exe test_vehicle_tracking.py
-.\.venv\Scripts\python.exe test_accessibility_and_reports.py
-.\.venv\Scripts\python.exe test_weather_and_disruptions.py
-.\.venv\Scripts\python.exe test_route_scoring.py
-.\.venv\Scripts\python.exe test_route_engine.py
-.\.venv\Scripts\python.exe test_route_ranking_ml.py
-.\.venv\Scripts\python.exe test_geocoding_and_regions.py
-.\.venv\Scripts\python.exe test_demand_clustering.py
+.\.venv\Scripts\python.exe tests/test_alerts_system.py
+.\.venv\Scripts\python.exe tests/test_vehicle_tracking.py
+.\.venv\Scripts\python.exe tests/test_accessibility_and_reports.py
+.\.venv\Scripts\python.exe tests/test_weather_and_disruptions.py
+.\.venv\Scripts\python.exe tests/test_route_scoring.py
+.\.venv\Scripts\python.exe tests/test_route_engine.py
+.\.venv\Scripts\python.exe tests/test_route_ranking_ml.py
+.\.venv\Scripts\python.exe tests/test_geocoding_and_regions.py
+.\.venv\Scripts\python.exe tests/test_demand_clustering.py
 ```
 
 ### Step 4: Frontend Build & Lint Verification
 ```powershell
 Set-Location "d:\AI and ML Project\frontend"
-npm run build   # Type-checks and builds production bundle
+npm run build   # Type-checks and builds production bundle (built in ~750ms)
 npm run lint    # Runs oxlint with 0 errors
+```
+
+### Step 5: View the Interactive Architecture Visualizer
+Open [`docs/arch.html`](file:///d:/AI%20and%20ML%20Project/docs/arch.html) directly in any web browser, or serve it locally:
+```powershell
+python -m http.server 8080 --directory "d:\AI and ML Project\docs"
+# Open http://localhost:8080/arch.html in your browser
 ```
 
 ---
@@ -141,25 +163,25 @@ npm run lint    # Runs oxlint with 0 errors
 ## 6. Key REST API Endpoints
 
 ### Routing & Geocoding
-* `POST /api/routes`: Computes candidate routes (`shortest`, `estimated_fastest`, `alternative_corridor`), attaches multi-criteria scores, weather hazard scores, and regional disruption intersections.
-* `POST /api/geocode`: Resolves text queries or coordinate strings with gazetteer lookup, Nominatim fallback, and coverage metadata.
-* `GET /api/regions`: Returns catalog of 10 regions across all 8 NER states.
+* `POST /api/routes`: Computes candidate routes (`shortest`, `estimated_fastest`, `alternative_corridor`), snaps coordinates (max 3,000m), and attaches multi-criteria scores, weather hazard scores, and regional disruption intersections.
+* `POST /api/geocode`: Resolves text queries or coordinate strings with 8-state gazetteer lookup, Nominatim fallback, and coverage metadata.
+* `GET /api/regions`: Returns catalog of 10 regions across all 8 NER states with lazy LRU graph manager.
 
 ### Machine Learning & Demand Zones
 * `GET /api/ml-ranking/evaluation`: Reports 5-model benchmark evaluation, learned logistic weights, and group shuffle split accuracy.
-* `POST /api/demand-zones`: Projects coordinates to UTM Zone 46N (`EPSG:32646`), fits K-Means, and returns cluster centroids, demand shares, and cohesion metrics.
+* `POST /api/demand-zones`: Projects coordinates to UTM Zone 46N (`EPSG:32646`), fits K-Means ($K=2..6$), and returns cluster centroids, demand shares, and cohesion metrics.
 
 ### Road Accessibility & Field Reports
-* `GET /api/accessibility/segments`: Monitored road corridors with structural clearance and status.
-* `GET /api/accessibility/incidents`: Query field incident reports by status and type.
-* `POST /api/accessibility/reports`: Submit new field incident report (starts as `pending_review`).
-* `PATCH /api/accessibility/incidents/{id}/status`: Authorised admin workflow to verify or reject incident reports.
-* `POST /api/accessibility/upload-photo`: Validated multipart photo upload with 5 MB limit.
+* `GET /api/accessibility/segments`: Monitored road corridors with structural clearance and accessibility grades.
+* `GET /api/accessibility/incidents`: Query field incident reports by status (`pending`, `verified`, `resolved`, `rejected`) and hazard type.
+* `POST /api/accessibility/reports`: Submit new field incident report (starts as `pending`).
+* `PATCH /api/accessibility/incidents/{id}/status`: Authorised admin workflow to verify or reject incident reports, logging to `accessibility_audit_log`.
+* `POST /api/accessibility/upload-photo`: Validated multipart photo upload with 5 MB file size limit.
 
 ### GPS Vehicle & Delivery Tracking
-* `GET /api/tracking/vehicles`: Fleet inventory with vehicle type, capacity, and coordinates.
+* `GET /api/tracking/vehicles`: Fleet inventory with vehicle type, capacity, assigned driver, and live coordinates.
 * `GET /api/tracking/deliveries`: Active logistics missions with destination, goods, and progress.
-* `POST /api/tracking/deliveries`: Dispatch cargo along calculated route corridor.
+* `POST /api/tracking/deliveries`: Dispatch cargo along calculated route corridor with static ETA.
 * `POST /api/tracking/deliveries/{id}/simulate-step`: Advances demonstration GPS step along planned route.
 * `POST /api/tracking/telemetry`: Records telemetry and detects off-corridor deviations ($>500\,\text{m}$).
 
@@ -167,69 +189,139 @@ npm run lint    # Runs oxlint with 0 errors
 * `GET /api/notifications`: Retrieves alerts filtered by unread status, severity, and category.
 * `GET /api/notifications/unread-count`: Lightweight badge counter for workspace header.
 * `PATCH /api/notifications/{id}/read`: Toggle individual notification read state.
-* `POST /api/notifications/sync-triggers`: Automated evaluation of cross-service triggers with SHA-256 deduplication.
+* `POST /api/notifications/sync-triggers`: Automated evaluation of cross-service triggers with compound SHA-256 deduplication.
 * `GET /api/notifications/channels`: Channel adapter registry with delivery transparency.
 
 ---
 
 ## 7. Project File Structure
 
-```
+```text
 d:\AI and ML Project\
-├── AGENTS.md                                # Shared engineering context & changelog
-├── README.md                                # This document (UTF-8)
+├── AGENTS.md                                # Shared engineering context, rules & changelog
+├── README.md                                # Master project documentation (UTF-8)
+│
+├── docs/                                    # System architecture & evaluation guides
+│   ├── arch.html                            # Interactive animated architecture & workflow visualizer
+│   ├── index.html                           # Web mirror of interactive visualizer
+│   ├── ARCHITECTURE.md                      # Comprehensive modular architecture blueprint
+│   └── EVALUATION_AND_DEMO_GUIDE.md         # Evaluator walkthrough script (7 live scenarios)
+│
 ├── backend/
-│   ├── main.py                              # FastAPI app, schemas, endpoints, CORS
-│   ├── route_engine.py                      # OSMnx NetworkX Dijkstra pathfinding
-│   ├── route_scoring.py                     # Multi-criteria explainable scoring
-│   ├── route_ranking_ml.py                  # Pairwise Logistic Ranker & benchmarks
-│   ├── weather_service.py                   # Open-Meteo numerical weather & caching
-│   ├── disruptions_service.py               # Spatial polyline disruption detection
-│   ├── accessibility_service.py             # SQLite accessibility & field reports
-│   ├── tracking_service.py                  # SQLite vehicle tracking & deviation engine
-│   ├── alerts_service.py                    # SQLite alerts with SHA-256 deduplication
-│   ├── region_manager.py                    # 8-state NER catalog & graph manager
-│   ├── geocoding_service.py                 # Multi-tier gazetteer & Nominatim geocoder
-│   ├── demand_clustering.py                 # K-Means UTM 46N clustering
-│   ├── run_all_tests.py                     # Unified test suite runner
-│   ├── requirements.txt                     # Python dependencies
-│   ├── data/
+│   ├── core/                                # Graph pathfinding, multi-criteria scoring & ML
+│   │   ├── route_engine.py                  # OSMnx NetworkX Dijkstra & snapping engine
+│   │   ├── route_scoring.py                 # Multi-criteria explainable scoring (4 preferences)
+│   │   ├── route_ranking_ml.py              # Pairwise Logistic Ranker & benchmarks
+│   │   ├── region_manager.py                # 8-state NER catalog & LRU graph manager
+│   │   ├── demand_clustering.py             # K-Means projected UTM 46N demand clustering
+│   │   ├── pan_india_routing.py             # Pan-India OSRM corridor fallback routing
+│   │   └── __init__.py
+│   │
+│   ├── services/                            # Operational domain services (SQLite & external APIs)
+│   │   ├── accessibility_service.py         # SQLite road accessibility, incident queue & audit trail
+│   │   ├── tracking_service.py              # SQLite fleet registry, delivery dispatch & 500m deviation
+│   │   ├── alerts_service.py                # Multi-hazard alerts with SHA-256 compound deduplication
+│   │   ├── weather_service.py               # Open-Meteo numerical weather with 15-min cache
+│   │   ├── disruptions_service.py           # Spatial polyline disruption detection
+│   │   ├── geocoding_service.py             # Multi-tier gazetteer & cached Nominatim geocoder
+│   │   └── __init__.py
+│   │
+│   ├── scripts/                             # Offline data pipeline
+│   │   ├── download_roads.py                # OSMnx road graph acquisition
+│   │   ├── preprocess_roads.py              # Graph cleaning & mountain speed imputation
+│   │   └── __init__.py
+│   │
+│   ├── tests/                               # 11 Standalone automated test suites
+│   │   ├── test_alerts_system.py
+│   │   ├── test_vehicle_tracking.py
+│   │   ├── test_accessibility_and_reports.py
+│   │   ├── test_weather_and_disruptions.py
+│   │   ├── test_route_scoring.py
+│   │   ├── test_route_engine.py
+│   │   ├── test_route_ranking_ml.py
+│   │   ├── test_geocoding_and_regions.py
+│   │   ├── test_demand_clustering.py
+│   │   ├── test_api.py
+│   │   ├── test_demand_api.py
+│   │   └── __init__.py
+│   │
+│   ├── data/                                # Spatial data, databases & artifacts
 │   │   ├── processed/shillong_roads_clean.graphml # 21,764 nodes / 53,888 edges
 │   │   ├── regions_catalog.json             # 10 catalog regions across 8 NER states
-│   │   ├── regional_disruptions.json        # Verified advisory notices
-│   │   ├── sample_delivery_demand.csv       # Synthetic demonstration demand points
-│   │   ├── accessibility.db                 # Corridors, reports, and audit logs
-│   │   ├── tracking.db                      # Fleet vehicles, deliveries, telemetry
-│   │   ├── alerts.db                        # Deduplicated notifications
-│   │   └── cache/weather_cache.json         # Open-Meteo response cache
-│   └── models/
-│       └── pairwise_route_ranker_v1.joblib  # Trained model artifact
+│   │   ├── regional_disruptions.json        # Verified mountain highway advisories
+│   │   ├── sample_delivery_demand.csv       # Labeled synthetic demand dataset
+│   │   ├── accessibility.db                 # SQLite: road corridors, reports, audit logs
+│   │   ├── tracking.db                      # SQLite: vehicles, deliveries, telemetry logs
+│   │   ├── alerts.db                        # SQLite: multi-hazard alerts & dispatches
+│   │   └── uploads/                         # Validated citizen photo uploads (≤ 5MB)
+│   │
+│   ├── models/
+│   │   └── pairwise_route_ranker_v1.joblib  # Serialized ML model artifact
+│   │
+│   ├── reports/                             # Evaluation JSON reports
+│   │   ├── road_data_audit.json
+│   │   ├── demand_clustering_evaluation.json
+│   │   └── route_ranking_ml_evaluation.json
+│   │
+│   ├── main.py                              # FastAPI REST application & routers
+│   ├── run_all_tests.py                     # Master test suite runner
+│   ├── requirements.txt                     # Verified dependency manifest
+│   ├── README.md                            # Backend documentation
+│   └── *.py (shims)                         # 100% backward-compatible root re-exports
+│
 └── frontend/
-    ├── package.json                         # Dependencies & scripts
-    ├── vite.config.ts                       # Vite configuration
-    ├── index.html                           # HTML shell, PWA manifest & SW links
     ├── public/
     │   ├── manifest.webmanifest             # Standalone PWA manifest
     │   ├── sw.js                            # Offline caching service worker
-    │   └── favicon.svg                      # Vector application branding
-    └── src/
-        ├── App.tsx                          # 5-stage UI flow, side sheet, drawers
-        ├── i18n/                            # English & Hindi (हिंदी) localization
-        ├── components/
-        │   ├── MapView.tsx                  # Leaflet map with multi-layer overlays
-        │   ├── LocationSearchInput.tsx      # Hub search with coverage badges
-        │   ├── FieldReportModal.tsx         # Incident submission with offline draft option
-        │   ├── OfflineQueueModal.tsx        # Persistent offline sync manager
-        │   ├── NewDeliveryModal.tsx         # Cargo dispatch modal
-        │   ├── NotificationCenterModal.tsx  # Multi-hazard alert center
-        │   ├── AccessibilityMonitorPanel.tsx# Corridor & report verification panel
-        │   └── TrackingMonitorPanel.tsx     # Fleet monitor & GPS stepping simulator
-        └── services/
-            ├── routeService.ts              # Route API client
-            ├── accessibilityService.ts      # Accessibility & incident client
-            ├── trackingService.ts           # Fleet & telemetry client
-            ├── notificationService.ts       # Alerts client
-            └── offlineQueueService.ts       # LocalStorage offline draft sync service
+    │   └── favicon.svg                      # App logo mark
+    │
+    ├── src/
+    │   ├── App.tsx                          # 5-stage UI flow & GIS workspace
+    │   ├── i18n/                            # English & Hindi (हिंदी) bilingual translation
+    │   │   ├── en.ts
+    │   │   ├── hi.ts
+    │   │   └── index.tsx
+    │   │
+    │   ├── components/
+    │   │   ├── modals/                      # Modal dialogs
+    │   │   │   ├── FieldReportModal.tsx     # Incident reporting with offline draft option
+    │   │   │   ├── NewDeliveryModal.tsx     # Cargo dispatch & vehicle assignment
+    │   │   │   ├── NotificationCenterModal.tsx # Multi-hazard alerts dialog
+    │   │   │   └── OfflineQueueModal.tsx    # Persistent offline sync queue manager
+    │   │   │
+    │   │   ├── panels/                      # Drawers & monitoring panels
+    │   │   │   ├── AccessibilityMonitorPanel.tsx # Corridors, reports & audit log
+    │   │   │   ├── TrackingMonitorPanel.tsx # Fleet status & GPS stepping player
+    │   │   │   └── DemandZonesCard.tsx      # K-Means demand zones breakdown
+    │   │   │
+    │   │   ├── map/                         # GIS mapping layers & controls
+    │   │   │   ├── MapView.tsx              # Interactive Leaflet map with corridors
+    │   │   │   ├── MapLegend.tsx            # Visual symbology legend
+    │   │   │   └── RadarControl.tsx         # RainViewer radar animation controller
+    │   │   │
+    │   │   ├── common/                      # Navigation & inputs
+    │   │   │   ├── Header.tsx               # Top navbar & language toggle
+    │   │   │   └── LocationSearchInput.tsx  # Autocomplete search & quick-pick pills
+    │   │   │
+    │   │   ├── legacy/                      # 10 preserved reference cards
+    │   │   ├── index.ts                     # Barrel export for all components
+    │   │   └── *.tsx (shims)                # Re-export compatibility shims
+    │   │
+    │   ├── services/                        # API client services
+    │   │   ├── routeService.ts
+    │   │   ├── accessibilityService.ts
+    │   │   ├── trackingService.ts
+    │   │   ├── notificationService.ts
+    │   │   ├── offlineQueueService.ts
+    │   │   └── geocodingService.ts
+    │   │
+    │   ├── logic/                           # Client-side scoring & formatters
+    │   ├── types/                           # TypeScript data interfaces
+    │   └── data/locations.ts                # Verified coordinates for 8 NER states
+    │
+    ├── package.json
+    ├── vite.config.ts
+    └── README.md                            # Frontend documentation
 ```
 
 ---
@@ -238,17 +330,18 @@ d:\AI and ML Project\
 
 All **9 test suites** and frontend production checks pass cleanly with exit code `0`:
 
-* `test_alerts_system.py`: `Ran 6 tests in 0.31s — OK`
-* `test_vehicle_tracking.py`: `Ran 7 tests in 0.34s — OK`
-* `test_accessibility_and_reports.py`: `Ran 7 tests in 0.33s — OK`
-* `test_weather_and_disruptions.py`: `Ran 5 test phases — ALL PASSED`
-* `test_route_scoring.py`: `Ran 5 test phases across 4 preferences — ALL PASSED`
-* `test_route_engine.py`: `Ran 7 test phases — ALL PASSED`
-* `test_route_ranking_ml.py`: `Ran 7 test phases — ALL PASSED`
-* `test_geocoding_and_regions.py`: `Ran 6 test phases — ALL PASSED`
-* `test_demand_clustering.py`: `Ran 6 test phases — ALL PASSED`
-* `frontend tsc -b && vite build`: `built in 998ms — exit code 0`
-* `frontend oxlint`: `65 files checked — 0 errors`
+* Master Regression Runner: `python run_all_tests.py` — **100% REGRESSION PASS (48.39s)**
+* `test_alerts_system.py`: `Ran 6 tests in 0.41s — OK`
+* `test_vehicle_tracking.py`: `Ran 7 tests in 0.43s — OK`
+* `test_accessibility_and_reports.py`: `Ran 7 tests in 0.40s — OK`
+* `test_weather_and_disruptions.py`: `Ran 5 test phases — ALL PASSED (8.60s)`
+* `test_route_scoring.py`: `Ran 5 test phases across 4 preferences — ALL PASSED (14.42s)`
+* `test_route_engine.py`: `Ran 7 test phases — ALL PASSED (10.31s)`
+* `test_route_ranking_ml.py`: `Ran 7 test phases — ALL PASSED (4.28s)`
+* `test_geocoding_and_regions.py`: `Ran 6 test phases — ALL PASSED (6.39s)`
+* `test_demand_clustering.py`: `Ran 6 test phases — ALL PASSED (3.14s)`
+* `frontend tsc -b && vite build`: `built in 748ms — exit code 0`
+* `frontend oxlint`: `88 files checked — 0 errors`
 
 ---
 
