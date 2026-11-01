@@ -1,101 +1,122 @@
-# SIH 26002 — AI Logistics & Accessibility Intelligence
-### Government Alerts + Weather + OpenStreetMap + Risk-Aware Logistics (North Eastern Region)
+# NER SmartRoute Frontend (SIH 26002)
 
-A GIS-based logistics intelligence dashboard built for the North Eastern Region (Meghalaya Pilot Corridor) that compares delivery routes, displays real-time weather and precipitation radar, estimates multi-factor corridor risks, visualizes critical infrastructure, and recommends an optimal delivery route based on active terrain and atmospheric conditions.
-
----
-
-## 1. System Architecture & Visual Design
-
-The application is structured as a **single-screen, highly focused GIS logistics dashboard**:
-- **Fixed Dark Navy Header** (`#101827`, 84px): Displays project branding, shield icon, subtitle, and the teal `NORTH EASTERN REGION` pilot corridor pill.
-- **Left Independent Scrollable Panel** (~440px wide): Contains 10 feature cards stacked vertically with independent scrolling (`overflow-y: auto`), subtle borders, rounded corners, and clear metric values.
-- **Right Interactive Map Workspace** (Full remaining viewport): Leaflet-powered GIS map featuring OpenStreetMap base tiles, route alternatives, custom SVG origin/destination markers, critical facilities, RainViewer radar overlay, floating `📍 Focus NER` button, floating `🌧️ LIVE PRECIPITATION RADAR` control panel, and a collapsible `MAP LEGEND`.
+Modern React 19 + TypeScript GIS web client for **SIH 26002 — AI Logistics & Accessibility Intelligence (NER SmartRoute)**. Features interactive Leaflet mapping, explainable multi-criteria routing, live Open-Meteo weather hazard overlays, road accessibility incident reporting, GPS delivery fleet tracking, notification center, offline draft sync queue, and English/Hindi (हिंदी) bilingual support.
 
 ---
 
-## 2. Feature Implementation & Data Provenance
+## 1. Directory Structure
 
-| Feature Card | Integration Source | Current Operational Status | Notes / Limitations |
-|---|---|---|---|
-| **📦 Logistics Mission** | Client GIS Engine | **Live Operational** | Selectable goods, priority, quantity (kg), vehicle type, and NER pilot locations (Shillong, Sohra, Guwahati, Jowai, etc.). |
-| **📊 Regional Intelligence** | Multi-factor Synthesis | **Live Synchronized** | 4 metric tiles: Active Alerts, Route Risk (0–100), Weather Risk (0–100), and Accessibility (0–100). |
-| **🧠 AI Logistics Recommendation** | Multi-attribute Utility Engine | **Live Modelled** | 6-factor composite scoring with natural-language rationale generated from route metrics. |
-| **🛣️ Route Alternatives** | OSRM + High-Res NER Highway Corridors | **Live & Deterministic Fallback** | Evaluates Route A (NH 206 Direct), Route B (SH-5 Highland Bypass), and Route C (Eastern Ridge). Clicking cards updates map highlights and all dashboard metrics. |
-| **🌧️ Weather Intelligence** | Open-Meteo Forecast API (`api.open-meteo.com`) | **Live Connected** | Real-time precipitation probability, wind speed, temperature, and 6-hour forecast timeline. Never outputs fake 0% on failure. |
-| **🚨 Disaster Alerts** | NDMA / SACHET CAP Portal (`sachet.ndma.gov.in`) | **Verified Regional CAP Notices** | Direct client-side fetch is subject to browser CORS. Uses verified CAP warning notices for Meghalaya (IMD/SDMA) with route intersection testing. Direct stream ready for FastAPI backend proxy. |
-| **🧠 Route Safety** | Multi-source Synthesis | **Live Modelled** | Risk score, classification (`LOW`, `MODERATE`, `HIGH`, `UNAVAILABLE`), active alerts breakdown, and documented data limitations. |
-| **🧠 AI Disaster News Intelligence** | Regional Publisher Registry | **Verified Regional Intelligence** | Real articles from *The Shillong Times*, *Northeast Now*, and *EastMojo* with links and timestamps. Structured for FastAPI news summarization. |
-| **🏥 Critical Infrastructure** | OpenStreetMap & SDMA Registry | **Live Mapped** | Mapped hospitals/clinics, relief shelters, and logistics depots with category filter toggles and interactive map popups. |
-| **🔎 Trusted Data Sources** | Multi-agency Provenance Registry | **Live & Documented** | Clickable links and operational status badges for NDMA, Open-Meteo, RainViewer, Copernicus DEM, GSI, FSI, and INCOIS. |
-| **🌧️ Live Precipitation Radar** | RainViewer API (`api.rainviewer.com`) | **Live Connected** | Observed radar reflectivity tile overlay on the main map with play/pause multi-frame animation cycling and timestamp tracking. |
+The frontend components and services are organized into clean domain-specific modules:
+
+```text
+frontend/src/
+├── components/
+│   ├── modals/                     # Modal dialogs & interactive user actions
+│   │   ├── FieldReportModal.tsx    # Citizen & driver road incident reporting
+│   │   ├── NewDeliveryModal.tsx    # Dispatch new delivery order with vehicle selection
+│   │   ├── NotificationCenterModal.tsx # Multi-hazard alerts & delivery status modal
+│   │   └── OfflineQueueModal.tsx   # Offline incident drafts sync manager
+│   │
+│   ├── panels/                     # Slide-over drawers & collapsible telemetry panels
+│   │   ├── AccessibilityMonitorPanel.tsx # Corridors, field reports queue, audit trail
+│   │   ├── TrackingMonitorPanel.tsx      # Fleet status, delivery progress, simulated GPS
+│   │   └── DemandZonesCard.tsx           # K-Means demand cluster breakdown
+│   │
+│   ├── map/                        # GIS mapping & geospatial layers
+│   │   ├── MapView.tsx             # Interactive Leaflet map (corridors, vehicles, alerts)
+│   │   ├── MapLegend.tsx           # Visual symbology legend
+│   │   └── RadarControl.tsx        # RainViewer precipitation radar animation
+│   │
+│   ├── common/                     # Core navigation & input controls
+│   │   ├── Header.tsx              # Top navigation bar, branding, language toggle
+│   │   └── LocationSearchInput.tsx # Autocomplete location search & quick-pick pills
+│   │
+│   ├── legacy/                     # Preserved reference & evaluation cards
+│   │   ├── CriticalInfrastructureCard.tsx
+│   │   ├── DisasterAlertsCard.tsx
+│   │   ├── DisasterNewsCard.tsx
+│   │   ├── LogisticsMissionCard.tsx
+│   │   ├── LogisticsRecommendationCard.tsx
+│   │   ├── RegionalIntelligenceCard.tsx
+│   │   ├── RouteAlternativesCard.tsx
+│   │   ├── RouteSafetyCard.tsx
+│   │   ├── TrustedDataSourcesCard.tsx
+│   │   └── WeatherIntelligenceCard.tsx
+│   │
+│   ├── index.ts                    # Barrel export for all components
+│   └── *.tsx (shims)               # Backward compatibility shims for direct imports
+│
+├── services/                       # API communication & offline sync
+│   ├── routeService.ts             # Calls backend /api/routes
+│   ├── accessibilityService.ts     # Corridors, reports, photo uploads
+│   ├── trackingService.ts          # Vehicle registry, deliveries, simulated GPS
+│   ├── notificationService.ts      # Multi-hazard alerts & channel delivery status
+│   ├── geocodingService.ts         # Gazetteer & Nominatim geocoding
+│   ├── offlineQueueService.ts      # LocalStorage offline draft sync engine
+│   ├── alertService.ts             # Regional disruptions & advisories
+│   └── radarService.ts             # RainViewer precipitation radar frames
+│
+├── logic/                          # Client-side scoring, formatting & utilities
+│   ├── routeScoring.ts             # Client-side 4-preference route evaluation
+│   ├── formatters.ts               # Duration, distance, and timestamp formatting
+│   └── routeRisk.ts                # Safety classification & hazard scoring
+│
+├── types/                          # TypeScript interface contracts
+│   ├── route.ts
+│   ├── accessibility.ts
+│   ├── tracking.ts
+│   ├── notification.ts
+│   ├── geocoding.ts
+│   ├── demandZone.ts
+│   └── ...
+│
+├── i18n/                           # Bilingual localization (English & Hindi)
+│   ├── en.ts                       # English translation dictionary
+│   ├── hi.ts                       # Hindi (हिंदी) translation dictionary
+│   └── index.tsx                   # React Context provider & useTranslation hook
+│
+├── data/                           # Geographic presets & pilot boundaries
+│   └── locations.ts                # Verified coordinates for 8 NER states
+│
+├── App.tsx                         # 5-stage progressive disclosure workflow
+└── main.tsx                        # React application bootstrap
+```
 
 ---
 
-## 3. Logistics Scoring & Risk Model
+## 2. Five-Stage Progressive Workflow
 
-The composite Logistics Score ($0-100$) uses transparent, configurable weights:
-$$\text{LogisticsScore} = 0.30 \times T + 0.15 \times D + 0.20 \times A + 0.15 \times (100 - R_{\text{disaster}}) + 0.10 \times (100 - R_{\text{weather}}) + 0.10 \times (100 - R_{\text{terrain}})$$
-
-Where:
-- $T$: Travel-time efficiency normalized against candidate routes
-- $D$: Distance efficiency normalized against candidate routes
-- $A$: Accessibility / demand-reachability index ($0-100$)
-- $R_{\text{disaster}}$: Modelled disaster exposure score ($0-100$)
-- $R_{\text{weather}}$: Open-Meteo atmospheric risk score ($0-100$)
-- $R_{\text{terrain}}$: Copernicus DEM slope gradient difficulty ($0-100$)
-
-*Notice: Modelled estimates do not constitute official emergency instructions or certified road safety determinations.*
-
----
-
-## 4. Technology Stack
-
-- **Framework**: React 19 + TypeScript
-- **Bundler**: Vite 8
-- **Styling**: Tailwind CSS v4 (`@tailwindcss/vite`) + Custom CSS utilities
-- **Mapping**: Leaflet 1.9 + OpenStreetMap Tile Layer
-- **Icons**: Lucide React
-- **Radar**: RainViewer Weather Maps API
+The user interface follows a focused 5-stage progressive disclosure flow:
+1. **Welcome (`welcome`)**: Hero overview, SIH challenge statement, and quickstart CTA.
+2. **Endpoints (`endpoints`)**: Origin and destination selector with 8-state NER gazetteer search and quick-pick pills.
+3. **Details (`details`)**: Priority selector (`balanced`, `distance`, `time`, `accessibility`) and cargo specifications.
+4. **Calculating (`calculating`)**: Loading animation displaying active OSM graph snapping and Dijkstra calculation.
+5. **Workspace (`workspace`)**: Full-screen GIS workspace with:
+   - Interactive Leaflet map (origin/destination markers, 3 alternative route corridors, real-time GPS vehicles, road incidents).
+   - Side sheet with route summary, candidate corridor picker, and 5 collapsible disclosure drawers:
+     1. **Score Breakdown Drawer**: Component score breakdown and formulas.
+     2. **K-Means Demand Zones Drawer**: Spatial cluster summaries and internal separation metrics.
+     3. **Route-Ranking AI/ML Drawer**: Pairwise win probabilities and 5-model benchmark comparison table.
+     4. **Road Accessibility & Field Reports Drawer**: Corridor accessibility grades, pending incident verification, and audit log.
+     5. **Fleet & Delivery Tracking Drawer**: Active vehicles, dispatch modal, >500m corridor deviation alerts, and simulated GPS step player.
+   - Top Header with English / Hindi language toggle, notification center modal with unread badge, and offline sync queue status.
 
 ---
 
-## 5. Local Setup & Running Commands
+## 3. Development Commands
 
-### Prerequisites
-- Node.js (v18+)
-- npm (v9+)
+Run inside `PS D:\AI and ML Project\frontend>`:
 
-### Installation
-```bash
-# Clone or navigate to the project directory
-cd "d:/AI and ML Project"
-
-# Install dependencies
+```powershell
+# Install npm dependencies
 npm install
-```
 
-### Development Dev Server
-```bash
-# Start Vite development server
+# Start development server (http://localhost:5173 or 5174)
 npm run dev
-# The application will be accessible at http://localhost:5173/
-```
 
-### Production Build
-```bash
-# Run TypeScript verification and Vite production build
+# Run TypeScript type check and production build
 npm run build
 
-# Preview production build locally
-npm run preview
+# Run Oxlint linter
+npm run lint
 ```
-
----
-
-## 6. Python FastAPI AI Backend Integration Architecture
-
-The service layer (`src/services/`) is modularized so that future Python FastAPI endpoints can replace client-side mock/proxy adapters seamlessly:
-- **Routes & Scoring**: Replace `src/services/routeService.ts` calls with `POST /api/v1/routes/optimize`.
-- **SACHET CAP Proxy**: Connect `src/services/alertService.ts` to `GET /api/v1/alerts/sachet-cap` to bypass browser CORS constraints.
-- **News Extraction & NLP**: Connect `src/services/newsService.ts` to `GET /api/v1/intelligence/disaster-news`.

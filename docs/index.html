@@ -1,0 +1,1762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NER SmartRoute — Interactive System Architecture & Animated Workflow Visualizer</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Mermaid 11 CDN -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+
+<style>
+:root {
+    --bg-main: #0b1120;
+    --bg-panel: #131d32;
+    --bg-card: #1a2744;
+    --bg-hover: #233558;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border: #223456;
+    --border-highlight: #3b82f6;
+    
+    --brand-blue: #3b82f6;
+    --brand-teal: #14b8a6;
+    --brand-emerald: #10b981;
+    --brand-purple: #8b5cf6;
+    --brand-amber: #f59e0b;
+    --brand-rose: #f43f5e;
+    --brand-cyan: #06b6d4;
+
+    --glow-blue: rgba(59, 130, 246, 0.35);
+    --glow-teal: rgba(20, 184, 166, 0.35);
+    --glow-purple: rgba(139, 92, 246, 0.35);
+}
+
+body.light {
+    --bg-main: #f1f5f9;
+    --bg-panel: #ffffff;
+    --bg-card: #f8fafc;
+    --bg-hover: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --border: #cbd5e1;
+    --border-highlight: #2563eb;
+    --glow-blue: rgba(37, 99, 235, 0.2);
+    --glow-teal: rgba(13, 148, 136, 0.2);
+    --glow-purple: rgba(124, 58, 237, 0.2);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    line-height: 1.5;
+    transition: background-color 0.25s ease, color 0.25s ease;
+    overflow-x: hidden;
+}
+
+/* Header & Banner */
+header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #042f2e 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 3%;
+    position: relative;
+    overflow: hidden;
+}
+
+header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.header-inner {
+    max-width: 1600px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    z-index: 2;
+}
+
+.branding {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.logo-badge {
+    width: 52px;
+    height: 52px;
+    background: linear-gradient(135deg, #090d16, #1e293b);
+    border: 2px solid var(--brand-teal);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px rgba(20, 184, 166, 0.3);
+}
+
+.logo-badge svg {
+    width: 32px;
+    height: 32px;
+}
+
+.brand-text h1 {
+    font-size: clamp(20px, 3vw, 28px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(90deg, #ffffff, #93c5fd, #5eead4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.brand-subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 3px;
+}
+
+.badge-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: rgba(20, 184, 166, 0.15);
+    color: #5eead4;
+    border: 1px solid rgba(20, 184, 166, 0.35);
+}
+
+.header-stats {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.stat-pill {
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-pill .val {
+    font-weight: 700;
+    color: var(--brand-blue);
+    font-size: 14px;
+}
+
+.stat-pill .lbl {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Simulation Playback Bar */
+.sim-bar {
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 3%;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+}
+
+.sim-inner {
+    max-width: 1600px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.sim-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-highlight);
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff;
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.5);
+}
+
+.btn-emerald {
+    background: linear-gradient(135deg, #059669, #047857);
+    color: white;
+    border-color: #10b981;
+}
+
+.btn-emerald:hover {
+    background: linear-gradient(135deg, #047857, #065f46);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+}
+
+.sim-stepper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.step-indicator {
+    display: flex;
+    gap: 4px;
+}
+
+.step-dot {
+    width: 22px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+    transition: all 0.3s ease;
+}
+
+.step-dot.active {
+    background: var(--brand-teal);
+    box-shadow: 0 0 10px var(--brand-teal);
+    width: 32px;
+}
+
+.step-dot.completed {
+    background: var(--brand-blue);
+}
+
+.sim-ticker {
+    font-family: 'Fira Code', monospace;
+    font-size: 12px;
+    color: #38bdf8;
+    background: rgba(8, 47, 73, 0.5);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    padding: 6px 12px;
+    border-radius: 6px;
+    max-width: 580px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Main Workspace */
+.main-layout {
+    max-width: 1600px;
+    margin: 25px auto;
+    padding: 0 3%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 420px;
+    gap: 24px;
+    align-items: start;
+}
+
+/* Tabs & Filter Bar */
+.workflow-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(20, 184, 166, 0.2));
+    border-color: var(--brand-blue);
+    color: #60a5fa;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+}
+
+/* Canvas & Diagram Card */
+.diagram-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    position: relative;
+}
+
+.diagram-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: rgba(19, 29, 50, 0.6);
+}
+
+.diagram-title-group h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.diagram-title-group p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.canvas-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.diagram-viewport {
+    padding: 30px 20px;
+    min-height: 640px;
+    overflow: auto;
+    position: relative;
+    background: 
+        radial-gradient(circle at 50% 50%, rgba(30, 41, 59, 0.4) 0%, transparent 100%),
+        linear-gradient(rgba(34, 52, 86, 0.2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 52, 86, 0.2) 1px, transparent 1px);
+    background-size: 100% 100%, 24px 24px, 24px 24px;
+    cursor: grab;
+}
+
+.diagram-viewport:active {
+    cursor: grabbing;
+}
+
+.mermaid-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 750px;
+    transition: transform 0.25s ease-out;
+}
+
+.mermaid svg {
+    max-width: 100%;
+    height: auto;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+}
+
+/* Mermaid Interactive Elements */
+.mermaid .node {
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.mermaid .node:hover rect,
+.mermaid .node:hover polygon,
+.mermaid .node:hover circle {
+    stroke: #38bdf8 !important;
+    stroke-width: 3.5px !important;
+    filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.8));
+}
+
+/* Pulsing Active Step Animation */
+@keyframes nodePulse {
+    0% {
+        filter: drop-shadow(0 0 4px rgba(20, 184, 166, 0.4));
+        transform: scale(1);
+    }
+    50% {
+        filter: drop-shadow(0 0 18px rgba(20, 184, 166, 0.95)) drop-shadow(0 0 25px rgba(59, 130, 246, 0.8));
+        transform: scale(1.03);
+    }
+    100% {
+        filter: drop-shadow(0 0 4px rgba(20, 184, 166, 0.4));
+        transform: scale(1);
+    }
+}
+
+.node-sim-active rect,
+.node-sim-active polygon,
+.node-sim-active circle {
+    stroke: #14b8a6 !important;
+    stroke-width: 4px !important;
+    animation: nodePulse 1.4s infinite ease-in-out;
+}
+
+/* Animated Flow Connectors (Dashed SVG Path Animation) */
+@keyframes flowDash {
+    to {
+        stroke-dashoffset: -40;
+    }
+}
+
+.mermaid .edgePaths path {
+    stroke-dasharray: 6 3;
+    animation: flowDash 1.2s linear infinite;
+    stroke-width: 2px !important;
+}
+
+/* Diagram Footer Legend */
+.diagram-legend {
+    padding: 14px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: rgba(19, 29, 50, 0.4);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+/* Side Inspector Panel */
+.side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: sticky;
+    top: 75px;
+}
+
+.inspector-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.inspector-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(19, 29, 50, 0.7);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.inspector-header h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inspector-body {
+    padding: 20px;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.node-role-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+}
+
+.inspector-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--brand-teal);
+    margin-bottom: 8px;
+}
+
+.inspector-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+.info-section {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+
+.info-section-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.code-snippet {
+    background: #090d16;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'Fira Code', monospace;
+    font-size: 12px;
+    color: #e2e8f0;
+    overflow-x: auto;
+    line-height: 1.5;
+}
+
+.formula-box {
+    background: rgba(30, 58, 138, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'Fira Code', monospace;
+    font-size: 12px;
+    color: #93c5fd;
+    margin: 8px 0;
+}
+
+.disclosure-note {
+    background: rgba(245, 158, 11, 0.1);
+    border-left: 3px solid var(--brand-amber);
+    padding: 10px 14px;
+    border-radius: 0 8px 8px 0;
+    font-size: 12px;
+    color: #fcd34d;
+    margin-top: 14px;
+    line-height: 1.5;
+}
+
+.file-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Fira Code', monospace;
+    font-size: 12px;
+    color: #60a5fa;
+    background: rgba(37, 99, 235, 0.12);
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(37, 99, 235, 0.25);
+    margin-top: 4px;
+    text-decoration: none;
+}
+
+/* Weight Simulator Widget */
+.sim-widget {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 20px;
+}
+
+.sim-widget h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pref-pills {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.pref-btn {
+    flex: 1;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 0;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-align: center;
+}
+
+.pref-btn.active {
+    background: var(--brand-blue);
+    border-color: var(--brand-blue);
+    color: white;
+}
+
+.weight-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.weight-bar-bg {
+    height: 6px;
+    background: var(--bg-hover);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 3px;
+}
+
+.weight-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .main-layout {
+        grid-template-columns: 1fr;
+    }
+    .side-panel {
+        position: static;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- Header Banner -->
+<header>
+    <div class="header-inner">
+        <div class="branding">
+            <div class="logo-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#14b8a6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+            </div>
+            <div class="brand-text">
+                <h1>NER SmartRoute — Interactive System Architecture</h1>
+                <div class="brand-subtitle">
+                    <span>SIH 26002: AI Logistics & Accessibility Intelligence</span>
+                    <span class="badge-tag">Academic Track CSE276</span>
+                    <span class="badge-tag">Meghalaya Pilot Corridor</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-stats">
+            <div class="stat-pill">
+                <span class="val">21,764</span>
+                <span class="lbl">OSM Graph Nodes</span>
+            </div>
+            <div class="stat-pill">
+                <span class="val">53,888</span>
+                <span class="lbl">Directed Edges</span>
+            </div>
+            <div class="stat-pill">
+                <span class="val">11 Dimensions</span>
+                <span class="lbl">ML Pairwise Features</span>
+            </div>
+            <div class="stat-pill">
+                <span class="val">100% Pass</span>
+                <span class="lbl">9 Regression Suites</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Global Simulation & Controls Bar -->
+<section class="sim-bar">
+    <div class="sim-inner">
+        <div class="sim-controls">
+            <button class="btn btn-emerald" id="playSimBtn" onclick="toggleSim()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                <span>Play Pipeline Animation</span>
+            </button>
+            <button class="btn" onclick="stepSim(1)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                <span>Step Next</span>
+            </button>
+            <button class="btn" onclick="resetSim()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                <span>Reset</span>
+            </button>
+        </div>
+
+        <div class="sim-stepper">
+            <span>Stage:</span>
+            <div class="step-indicator" id="stepDots">
+                <!-- Injected via JS -->
+            </div>
+            <strong id="stepLabel" style="color:var(--text-primary); font-size:12px;">Idle (Click Play)</strong>
+        </div>
+
+        <div class="sim-ticker" id="simTicker">
+            Ready to animate full end-to-end data pipeline from user input to GPS fleet deviation alerts.
+        </div>
+    </div>
+</section>
+
+<!-- Main Workspace -->
+<main class="main-layout">
+
+    <!-- Left Column: Navigation, Diagram & Legend -->
+    <div class="diagram-section">
+        
+        <!-- Workflow Tabs -->
+        <nav class="workflow-nav" id="workflowTabs">
+            <button class="tab-btn active" data-view="master">
+                🌐 All-in-One Master Flow
+            </button>
+            <button class="tab-btn" data-view="routing">
+                🛣️ Routing & Explainable Scoring
+            </button>
+            <button class="tab-btn" data-view="ml_pipeline">
+                🧠 Pairwise ML & Demand Clusters
+            </button>
+            <button class="tab-btn" data-view="accessibility">
+                🚧 Road Accessibility & Incident Auditing
+            </button>
+            <button class="tab-btn" data-view="tracking">
+                🛰️ GPS Fleet Tracking & 500m Deviation
+            </button>
+            <button class="tab-btn" data-view="alerts_offline">
+                🚨 Multi-Hazard Alerts & Offline Sync
+            </button>
+        </nav>
+
+        <!-- Diagram Card -->
+        <div class="diagram-card">
+            <div class="diagram-header">
+                <div class="diagram-title-group">
+                    <h2 id="diagTitle">All-in-One Master Flow</h2>
+                    <p id="diagSubtitle">Full end-to-end system orchestration across frontend, backend algorithms, and database services.</p>
+                </div>
+                <div class="canvas-toolbar">
+                    <button class="btn" onclick="zoom(1)" title="Zoom In">＋</button>
+                    <button class="btn" onclick="zoom(-1)" title="Zoom Out">－</button>
+                    <button class="btn" onclick="resetZoom()" title="Reset Zoom">1:1</button>
+                    <button class="btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
+                </div>
+            </div>
+
+            <!-- Scrollable / Zoomable Viewport -->
+            <div class="diagram-viewport" id="viewport">
+                <div class="mermaid-wrapper" id="diagramWrapper">
+                    <pre class="mermaid" id="mermaidTarget"></pre>
+                </div>
+            </div>
+
+            <!-- Symbology Legend -->
+            <div class="diagram-legend">
+                <div class="legend-item"><span class="legend-dot" style="background:#06b6d4"></span> Frontend & UI</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span> Routing Core Engine</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#8b5cf6"></span> ML Ranking & Clustering</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#10b981"></span> Operational Services (SQLite)</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span> Disruption / Weather Feeds</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#f43f5e"></span> Alerts & Deviation Detection</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Right Column: Interactive Deep-Dive Inspector & Weight Simulator -->
+    <aside class="side-panel">
+        
+        <!-- Deep-Dive Inspector Card -->
+        <div class="inspector-card">
+            <div class="inspector-header">
+                <h3>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#14b8a6" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    Component Inspector
+                </h3>
+                <span class="badge-tag" id="inspectorCategory">CORE</span>
+            </div>
+
+            <div class="inspector-body" id="inspectorContent">
+                <div class="node-role-badge" style="background:rgba(59,130,246,0.15); color:#60a5fa;">Interactive Architecture Explorer</div>
+                <h4 class="inspector-title">Welcome to SmartRoute</h4>
+                <p class="inspector-desc">
+                    Click any node in the flowchart or click <strong>"Play Pipeline Animation"</strong> above to see active data flows, mathematical formulations, and operational contracts.
+                </p>
+
+                <div class="info-section">
+                    <div class="info-section-title">📂 Primary Implementation File</div>
+                    <a href="file:///d:/AI%20and%20ML%20Project/backend/core/route_engine.py" class="file-link">
+                        backend/core/route_engine.py
+                    </a>
+                </div>
+
+                <div class="info-section">
+                    <div class="info-section-title">📐 Key Mathematical Concept</div>
+                    <div class="formula-box">
+                        Dijkstra Shortest: min Σ length(u, v)<br>
+                        Estimated Fastest: min Σ (length / speed_kph * 3.6)
+                    </div>
+                </div>
+
+                <div class="disclosure-note">
+                    <strong>⚖️ Academic Integrity Disclosure:</strong><br>
+                    Travel durations are static design estimates based on mountain road hierarchy (20–50 km/h), never fabricated live traffic.
+                </div>
+            </div>
+        </div>
+
+        <!-- Preference Weight Simulator Widget -->
+        <div class="sim-widget">
+            <h4>
+                <span>Preference Weight Simulator</span>
+                <span class="badge-tag" style="background:rgba(59,130,246,0.15); color:#93c5fd;">Explainable AI</span>
+            </h4>
+            
+            <div class="pref-pills">
+                <button class="pref-btn active" onclick="setPreference('balanced')">Balanced</button>
+                <button class="pref-btn" onclick="setPreference('distance')">Distance</button>
+                <button class="pref-btn" onclick="setPreference('time')">Fastest</button>
+                <button class="pref-btn" onclick="setPreference('accessibility')">Accessibility</button>
+            </div>
+
+            <div id="weightBarsContainer">
+                <!-- Dynamically rendered via JS -->
+            </div>
+        </div>
+
+    </aside>
+
+</main>
+
+<script>
+// =========================================================================
+// 1. MERMAID DIAGRAM DEFINITIONS ACROSS 6 DOMAINS
+// =========================================================================
+
+const DIAGRAMS = {
+
+master: {
+    title: "All-in-One Master Flow",
+    subtitle: "Complete end-to-end data lifecycle from user search to live GPS fleet corridor deviation alerts.",
+    code: `
+flowchart TD
+    UI["💻 Frontend (React 19 + Leaflet)"] --> API["⚡ FastAPI REST Gateway (main.py)"]
+    
+    subgraph S1["Module A: Intelligent Mountain Routing"]
+        API --> RE["🗺️ RouteEngine (core/route_engine.py)"]
+        GRAPH[("📦 OSM GraphML (21,764 nodes)")] --> RE
+        RE --> SNAP{"Snapping ≤ 3,000m?"}
+        SNAP -->|No| ERR["❌ OutOfCoverageError"]
+        SNAP -->|Yes| DIJK["🧭 Dijkstra (Shortest & Fastest)"]
+        DIJK --> CAND["🛣️ Candidate Routes A, B, C"]
+    end
+
+    subgraph S2["Module C: Environmental Enrichment"]
+        CAND --> WEATH["🌧️ WeatherService (Open-Meteo Cache)"]
+        CAND --> DISR["⚠️ DisruptionsService (Regional Advisories)"]
+    end
+
+    subgraph S3["Module B: Scoring & ML Ranking"]
+        WEATH --> SCOR["📊 Multi-Criteria Scorer (route_scoring.py)"]
+        DISR --> SCOR
+        SCOR --> ML["🧠 Pairwise Logistic Ranker (route_ranking_ml.py)"]
+        ART[("💾 Model Artifact: .joblib")] --> ML
+    end
+
+    subgraph S4["Module F & G: Operations & Alerts"]
+        ML --> DISP["📋 Delivery Dispatch (NewDeliveryModal)"]
+        DISP --> TRK["🛰️ TrackingService (tracking.db)"]
+        TRK --> DEV{"Corridor Deviation > 500m?"}
+        DEV -->|Yes| ALT["🚨 AlertsService (alerts.db / SHA-256)"]
+        DEV -->|No| OK["✅ On Track Telemetry"]
+    end
+
+    subgraph S5["Module D & E: Crowdsourced Auditing"]
+        CIT["📱 Citizen / Driver Field Report"] --> PEND["⏳ Pending Incident (accessibility.db)"]
+        PEND --> AUDIT["🛡️ Immutable Audit Log"]
+        AUDIT --> VERIF{"Admin Verified?"}
+        VERIF -->|Approved| RE
+        VERIF -->|Approved| ALT
+    end
+
+    ALT --> NOTIF["🔔 Notification Center Modal"]
+    NOTIF --> UI
+
+    classDef uiClass fill:#083344,stroke:#06b6d4,stroke-width:2px,color:#e0f2fe;
+    classDef coreClass fill:#1e3a8a,stroke:#3b82f6,stroke-width:2px,color:#dbeafe;
+    classDef mlClass fill:#3b0764,stroke:#8b5cf6,stroke-width:2px,color:#ede9fe;
+    classDef servClass fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#d1fae5;
+    classDef alertClass fill:#881337,stroke:#f43f5e,stroke-width:2px,color:#ffe4e6;
+    classDef dataClass fill:#78350f,stroke:#f59e0b,stroke-width:2px,color:#fef3c7;
+
+    class UI,NOTIF,CIT uiClass;
+    class RE,DIJK,CAND coreClass;
+    class SCOR,ML mlClass;
+    class TRK,PEND,AUDIT servClass;
+    class ALT,ERR alertClass;
+    class GRAPH,ART,WEATH,DISR dataClass;
+    `
+},
+
+routing: {
+    title: "Routing & Explainable Scoring",
+    subtitle: "Dijkstra dual-cost pathfinding and multi-attribute utility route evaluation across 4 user preferences.",
+    code: `
+flowchart TD
+    INP["Origin & Destination Coordinates"] --> SNAP_O["Snap Origin to Graph"]
+    INP --> SNAP_D["Snap Destination to Graph"]
+    
+    SNAP_O --> CHECK{"Snap Distance ≤ 3,000m?"}
+    SNAP_D --> CHECK
+
+    CHECK -->|Violated| REJ["Reject with OutOfCoverageError"]
+    CHECK -->|Valid| LOAD["Load GraphML (Singleton In-Memory)"]
+
+    LOAD --> PATH_S["Shortest Path: min Σ length"]
+    LOAD --> PATH_T["Fastest Path: min Σ travel_time"]
+    LOAD --> PATH_ALT["Alternative Corridor: Penalize Highway Overlap"]
+
+    PATH_S --> COMP["Compile 3 Candidate Corridors"]
+    PATH_T --> COMP
+    PATH_ALT --> COMP
+
+    COMP --> S_DIST["Compute Distance Efficiency: S_d = 100 * (d_min / d)"]
+    COMP --> S_TIME["Compute Time Efficiency: S_t = 100 * (t_min / t)"]
+    COMP --> S_ROAD["Compute Road Hierarchy: Primary/Secondary vs Unclassified"]
+    COMP --> S_SNAP["Compute Snap Penalty: 100 * (1 - dist / 3000)"]
+    COMP --> S_ENV["Enrich with Weather (0-100) & Advisory Penalties"]
+
+    S_DIST --> WEIGHTS{"User Preference Selector"}
+    S_TIME --> WEIGHTS
+    S_ROAD --> WEIGHTS
+    S_SNAP --> WEIGHTS
+    S_ENV --> WEIGHTS
+
+    WEIGHTS -->|Balanced| W_BAL["Weights: 30% Time, 25% Dist, 15% Road, 15% Wx, 10% Disr, 5% Snap"]
+    WEIGHTS -->|Distance| W_DST["Weights: 50% Dist, 15% Time, 10% Road, 10% Wx, 10% Disr, 5% Snap"]
+    WEIGHTS -->|Fastest| W_TIM["Weights: 50% Time, 15% Dist, 15% Road, 10% Wx, 5% Disr, 5% Snap"]
+    WEIGHTS -->|Accessibility| W_ACC["Weights: 30% Road, 20% Snap, 20% Wx, 15% Disr, 10% Time, 5% Dist"]
+
+    W_BAL --> FINAL["Overall Explainable Score (0 - 100)"]
+    W_DST --> FINAL
+    W_TIM --> FINAL
+    W_ACC --> FINAL
+
+    style REJ fill:#881337,stroke:#f43f5e,stroke-width:2px;
+    style LOAD fill:#1e3a8a,stroke:#3b82f6,stroke-width:2px;
+    style FINAL fill:#064e3b,stroke:#10b981,stroke-width:2px;
+    `
+},
+
+ml_pipeline: {
+    title: "Pairwise ML & Demand Clusters",
+    subtitle: "Pairwise Logistic Regression ranking with GroupShuffleSplit and UTM 46N K-Means demand clustering.",
+    code: `
+flowchart TD
+    subgraph ML_RANK["Pairwise Route-Ranking ML Pipeline"]
+        CAND_ROUTES["Candidate Routes A, B, C"] --> FEAT["Extract 11-Dimensional Route Features"]
+        FEAT --> DIFF["Compute Differential Vector: Δx_AB = x_A - x_B"]
+        DIFF --> SCALER["StandardScaler (Trained Parameters)"]
+        SCALER --> LOGIT["Pairwise Logistic Regression"]
+        MODEL_ART[("💾 pairwise_route_ranker_v1.joblib")] --> LOGIT
+        LOGIT --> PROB["Preference Probability: P(A ≻ B) = σ(w^T Δx)"]
+        PROB --> SOFTMAX["Borda Count / Softmax Win Matrix"]
+        SOFTMAX --> ML_RANKED["ML Predicted Route Order"]
+    end
+
+    subgraph DEMAND_CLUST["K-Means Projected Demand Clustering"]
+        DEMAND_CSV[("📄 sample_delivery_demand.csv")] --> LAT_LNG["Extract Delivery Coordinates (WGS84)"]
+        LAT_LNG --> PROJ["Project to UTM 46N (EPSG:32646 Metres)"]
+        PROJ --> K_MEANS["K-Means Clustering (K = 2..6, Default K=4)"]
+        K_MEANS --> CENTROIDS["Calculate Spatial Centroids & Radii"]
+        CENTROIDS --> EVAL["Compute Silhouette Score & Davies-Bouldin Index"]
+        EVAL --> REPORT[("📊 demand_clustering_evaluation.json")]
+    end
+
+    style MODEL_ART fill:#78350f,stroke:#f59e0b,stroke-width:2px;
+    style LOGIT fill:#3b0764,stroke:#8b5cf6,stroke-width:2px;
+    style K_MEANS fill:#064e3b,stroke:#10b981,stroke-width:2px;
+    style REPORT fill:#1e3a8a,stroke:#3b82f6,stroke-width:2px;
+    `
+},
+
+accessibility: {
+    title: "Road Accessibility & Field Auditing",
+    subtitle: "Crowdsourced road hazard reporting, 5MB photo validation, SQLite audit trail, and admin verification.",
+    code: `
+flowchart TD
+    CITIZEN["Citizen / Delivery Driver"] --> FORM["FieldReportModal UI"]
+    GPS["Device Geolocation / Map Click"] --> FORM
+    CAMERA["Photo Upload (≤ 5MB)"] --> FORM
+
+    FORM --> POST["POST /api/accessibility/reports"]
+    POST --> VALIDATE{"Validate: Coordinates in Bounds & Photo ≤ 5MB"}
+
+    VALIDATE -->|Invalid| ERR_RESP["Return HTTP 422 Unprocessable"]
+    VALIDATE -->|Valid| SAVE_IMG["Save to backend/data/uploads/"]
+    SAVE_IMG --> DB_INC[("accessibility.db: incident_reports")]
+
+    DB_INC --> PENDING_ST["Record created with status = 'pending'"]
+    PENDING_ST --> AUDIT_LOG[("accessibility.db: accessibility_audit_log")]
+
+    ADMIN["Admin Officer Review"] --> REVIEW_TAB["AccessibilityMonitorPanel UI"]
+    REVIEW_TAB --> PATCH["PATCH /api/accessibility/incidents/{id}/status"]
+
+    PATCH --> ACTION{"Admin Decision"}
+    ACTION -->|Approve| VERIFIED["Status = 'verified'"]
+    ACTION -->|Resolve| RESOLVED["Status = 'resolved'"]
+    ACTION -->|Reject| REJECTED["Status = 'rejected'"]
+
+    VERIFIED --> CORRIDOR_UPDATE["Update Affected Road Segment Grade"]
+    VERIFIED --> TRIGGER_ALERT["AlertsService: Auto-Create Multi-Hazard Alert"]
+    
+    CORRIDOR_UPDATE --> RE_ENGINE["RouteEngine: Penalize Segment in Dijkstra"]
+
+    style DB_INC fill:#78350f,stroke:#f59e0b,stroke-width:2px;
+    style VERIFIED fill:#064e3b,stroke:#10b981,stroke-width:2px;
+    style TRIGGER_ALERT fill:#881337,stroke:#f43f5e,stroke-width:2px;
+    `
+},
+
+tracking: {
+    title: "GPS Fleet Tracking & 500m Deviation",
+    subtitle: "Vehicle telemetry streaming, delivery dispatch, perpendicular corridor distance, and off-corridor alerts.",
+    code: `
+flowchart TD
+    FLEET[("tracking.db: vehicles")] --> DISPATCH["NewDeliveryModal: Assign Vehicle & Route"]
+    DISPATCH --> CREATE_DELIV["POST /api/tracking/deliveries"]
+    CREATE_DELIV --> ACTIVE_DELIV[("tracking.db: deliveries (status='in_transit')")]
+
+    ACTIVE_DELIV --> TELEMETRY_STREAM["Vehicle Telemetry Ping (Lat, Lng, Speed, Bearing)"]
+    TELEMETRY_STREAM --> PERP_CALC["Calculate Perpendicular Distance to Assigned Polyline"]
+
+    PERP_CALC --> DIST_CHECK{"Distance > 500 Metres?"}
+
+    DIST_CHECK -->|No (≤ 500m)| ON_CORRIDOR["Status: On Corridor"]
+    ON_CORRIDOR --> UPDATE_PROG["Update Delivery Trip Progress % & Static ETA"]
+    UPDATE_PROG --> LOG_TELEMETRY[("tracking.db: telemetry_logs")]
+
+    DIST_CHECK -->|Yes (> 500m)| DEVIATION["🚨 CORRIDOR DEVIATION DETECTED"]
+    DEVIATION --> FLAG_STATUS["Update Delivery status = 'deviated'"]
+    FLAG_STATUS --> CREATE_ALERT["AlertsService: Trigger DEV-CRITICAL Alert"]
+    CREATE_ALERT --> NOTIF_MODAL["NotificationCenterModal: Dispatch Driver & Ops Alert"]
+
+    SIM_STEP["Interactive Demo: simulate-step endpoint"] --> TELEMETRY_STREAM
+
+    style ACTIVE_DELIV fill:#78350f,stroke:#f59e0b,stroke-width:2px;
+    style DEVIATION fill:#881337,stroke:#f43f5e,stroke-width:2px;
+    style ON_CORRIDOR fill:#064e3b,stroke:#10b981,stroke-width:2px;
+    `
+},
+
+alerts_offline: {
+    title: "Multi-Hazard Alerts & Offline Sync",
+    subtitle: "Compound SHA-256 deduplicated notification center and remote Himalayan blackout localStorage draft queue.",
+    code: `
+flowchart TD
+    subgraph ALERTS["Automated Multi-Hazard Alert Center"]
+        TRIG_A["DisruptionsService: Sonapur / Umiam Active Advisories"] --> AGG["AlertsService: Compound Ingestion"]
+        TRIG_B["AccessibilityService: Verified Citizen Landslide Reports"] --> AGG
+        TRIG_C["TrackingService: Fleet Vehicle Corridor Deviations"] --> AGG
+
+        AGG --> HASH["Compute SHA-256 Fingerprint: Hash(Cat + Src + Loc + Window)"]
+        HASH --> DUP_CHECK{"Duplicate Hash in SQLite within 6 Hours?"}
+
+        DUP_CHECK -->|Yes| DISCARD["Drop Duplicate Alert (Prevent Alarm Fatigue)"]
+        DUP_CHECK -->|No| SAVE_ALERT[("alerts.db: alerts")]
+        
+        SAVE_ALERT --> UNREAD["Increment Header Bell Unread Counter Badge"]
+        UNREAD --> CHANNELS["Log Simulated SMS / WhatsApp / Webhook Dispatches"]
+    end
+
+    subgraph OFFLINE["PWA Offline Sync Queue (Remote Mountain Support)"]
+        FIELD_REP["Driver Submits Road Incident in Remote Area"] --> NET_CHECK{"Network Online?"}
+        
+        NET_CHECK -->|Yes| DIRECT_SEND["HTTP POST /api/accessibility/reports"]
+        NET_CHECK -->|No| LOCAL_STORE["Save to localStorage: 'offline_queue'"]
+        
+        LOCAL_STORE --> OFFLINE_MODAL["OfflineQueueModal: Displays Pending Draft Count"]
+        
+        ONLINE_EVENT["Browser 'online' Event Triggered"] --> AUTO_SYNC["Replay Queue with Exponential Backoff"]
+        AUTO_SYNC --> BATCH_POST["Batch Submit Drafts to Backend"]
+        BATCH_POST --> SYNC_SUCCESS["Clear Drafts from localStorage & Notify User"]
+    end
+
+    style SAVE_ALERT fill:#78350f,stroke:#f59e0b,stroke-width:2px;
+    style UNREAD fill:#881337,stroke:#f43f5e,stroke-width:2px;
+    style LOCAL_STORE fill:#3b0764,stroke:#8b5cf6,stroke-width:2px;
+    style SYNC_SUCCESS fill:#064e3b,stroke:#10b981,stroke-width:2px;
+    `
+}
+
+};
+
+// =========================================================================
+// 2. DETAILED NODE INSPECTOR DATA DIRECTORY
+// =========================================================================
+
+const NODE_DETAILS = {
+    // Master Flow Nodes
+    UI: {
+        title: "Frontend Client Application",
+        category: "FRONTEND",
+        role: "Single-screen 5-stage progressive disclosure GIS web dashboard.",
+        file: "frontend/src/App.tsx",
+        input: "User interactions (Origin, Destination, Preference, Cargo, Geolocation).",
+        output: "REST API requests to FastAPI backend; Leaflet interactive map rendering.",
+        formula: "5 Stages: welcome → endpoints → details → calculating → workspace",
+        disclosure: "Bilingual English / Hindi (हिंदी) translations backed by React Context."
+    },
+    API: {
+        title: "FastAPI REST Gateway",
+        category: "BACKEND API",
+        role: "Central entrypoint orchestrating all routing, ML, accessibility, and tracking routers.",
+        file: "backend/main.py",
+        input: "HTTP GET and POST payloads conforming to Pydantic schemas.",
+        output: "JSON responses with GeoJSON FeatureCollections and standardized error codes.",
+        formula: "CORS strict whitelisting: http://localhost:5173, http://127.0.0.1:5173, http://localhost:5174",
+        disclosure: "Singleton pattern initialized on startup for RouteEngine and SQLite services."
+    },
+    RE: {
+        title: "RouteEngine Core Dijkstra",
+        category: "CORE ROUTING",
+        role: "Loads OSM GraphML once into memory; snaps coordinates and solves shortest paths.",
+        file: "backend/core/route_engine.py",
+        input: "Origin (lat, lng), Destination (lat, lng), MAX_SNAP_DISTANCE_M = 3,000.0.",
+        output: "Shortest (length), Estimated Fastest (travel_time), and Alternative corridors.",
+        formula: "Dijkstra: d(v) = min_{u} [d(u) + weight(u, v)]",
+        disclosure: "Duration is a static estimate from road-class design speeds, not real-time traffic."
+    },
+    GRAPH: {
+        title: "Processed OSM Road Network",
+        category: "DATA ASSET",
+        role: "Strongly connected directed road network covering Shillong-Sohra mountain corridor.",
+        file: "backend/data/processed/shillong_roads_clean.graphml",
+        input: "OSM raw highway tags extracted via OSMnx.",
+        output: "21,764 nodes, 53,888 directed edges with imputed speed_kph and travel_time.",
+        formula: "Bounds: lat [25.195, 25.645], lng [91.572, 92.069]",
+        disclosure: "Filtered to largest strongly connected component to prevent dead-end routing."
+    },
+    SNAP: {
+        title: "3,000 Metre Snapping Guardrail",
+        category: "SPATIAL VALIDATION",
+        role: "Enforces strict regional road network coverage bounds.",
+        file: "backend/core/route_engine.py",
+        input: "Query point (lat, lng) and KD-Tree spatial index of graph road nodes.",
+        output: "Nearest road node ID and snap distance in metres.",
+        formula: "snap_dist_m <= 3000.0 m (rejects out-of-coverage destinations)",
+        disclosure: "Prevents deceptive cross-mountain routes when destinations exceed regional bounds."
+    },
+    DIJK: {
+        title: "Dijkstra Dual-Cost Pathfinding",
+        category: "ALGORITHM",
+        role: "Finds optimal path across distance (metres) and duration (seconds).",
+        file: "backend/core/route_engine.py",
+        input: "Source node, target node, weight attribute ('length' vs 'travel_time').",
+        output: "Ordered list of node IDs and GeoJSON LineString coordinates.",
+        formula: "Shortest: weight='length' | Fastest: weight='travel_time'",
+        disclosure: "Alternative corridor generated via penalty-weighted edge removal."
+    },
+    CAND: {
+        title: "Candidate Route Alternatives",
+        category: "ROUTING ARTIFACT",
+        role: "Set of up to 3 competitive corridors presented for multi-criteria evaluation.",
+        file: "backend/core/route_engine.py",
+        input: "Dijkstra calculations from RouteEngine.",
+        output: "Route A (Shortest), Route B (Estimated Fastest), Route C (Alternative Corridor).",
+        formula: "Corridor metric comparison: distance_km, duration_min, edge breakdown.",
+        disclosure: "Enables resilient choice during mountain landslides or severe weather."
+    },
+    WEATH: {
+        title: "Live Weather Intelligence Service",
+        category: "OPERATIONAL SERVICE",
+        role: "Open-Meteo numerical weather forecasts with 15-minute in-memory caching.",
+        file: "backend/services/weather_service.py",
+        input: "Corridor midpoint and boundary coordinates.",
+        output: "Temperature, precipitation probability %, wind speed, WMO weather codes.",
+        formula: "Weather Hazard Score (0-100) based on rain intensity and wind thresholds.",
+        disclosure: "Cached for 15 minutes to respect API rate limits and ensure offline resilience."
+    },
+    DISR: {
+        title: "Spatial Disruption Detection",
+        category: "OPERATIONAL SERVICE",
+        role: "Checks candidate route polylines against verified regional mountain advisories.",
+        file: "backend/services/disruptions_service.py",
+        input: "Candidate route coordinate sequence and regional_disruptions.json.",
+        output: "Intersecting advisories, clearance delays, and safety penalty scores.",
+        formula: "Polyline intersection buffer: 250m around active advisory coordinates.",
+        disclosure: "Includes verified Sonapur landslide clearance and Umiam bridge load restrictions."
+    },
+    SCOR: {
+        title: "Multi-Criteria Explainable Scorer",
+        category: "EVALUATION ENGINE",
+        role: "Calculates transparent 0–100 component scores across 6 criteria.",
+        file: "backend/core/route_scoring.py",
+        input: "Candidate route metrics, user preference type, weather and disruption data.",
+        output: "Component scores (distance, time, road, snap, weather, disruptions) & composite score.",
+        formula: "Score = Σ (weight_i * subscore_i) across 6 dimensions",
+        disclosure: "100% deterministic and explainable; formula published in UI drawer."
+    },
+    ML: {
+        title: "Pairwise Logistic Route Ranker",
+        category: "MACHINE LEARNING",
+        role: "11-dimension differential feature classification predicting route preference.",
+        file: "backend/core/route_ranking_ml.py",
+        input: "Candidate route feature differences Δx = x_A - x_B.",
+        output: "Pairwise win probabilities P(A ≻ B) and Softmax route ordering.",
+        formula: "P(A ≻ B) = 1 / (1 + exp(-w^T Δx_AB))",
+        disclosure: "Trained using GroupShuffleSplit cross-validation grouped by OD-pair to avoid leakage."
+    },
+    ART: {
+        title: "Serialized ML Model Artifact",
+        category: "DATA ASSET",
+        role: "Joblib binary artifact containing trained LogisticRegression and StandardScaler.",
+        file: "backend/models/pairwise_route_ranker_v1.joblib",
+        input: "Offline synthetic training comparisons.",
+        output: "Fast in-memory inference without retraining overhead.",
+        formula: "File size ~45 KB; loaded via singleton get_cached_ml_ranker().",
+        disclosure: "Does not modify graph geometry; functions strictly as an intelligent ranking advisor."
+    },
+    DISP: {
+        title: "Delivery Order Dispatcher",
+        category: "OPERATIONS UI",
+        role: "Dispatches chosen route to a registered fleet vehicle.",
+        file: "frontend/src/components/modals/NewDeliveryModal.tsx",
+        input: "Active calculated route, cargo type, quantity (kg), driver assignment.",
+        output: "Created delivery order registered in tracking.db with initial status 'in_transit'.",
+        formula: "Initial ETA = current_time + route.estimated_duration_min",
+        disclosure: "Pre-populates exact road-calculated distance and duration."
+    },
+    TRK: {
+        title: "GPS Vehicle & Fleet Tracking",
+        category: "OPERATIONAL SERVICE",
+        role: "Manages fleet vehicle registry, telemetry logging, and corridor compliance.",
+        file: "backend/services/tracking_service.py",
+        input: "Telemetry pings (lat, lng, speed, bearing) from vehicles or simulated player.",
+        output: "Vehicle status, delivery progress %, and perpendicular deviation distance.",
+        formula: "Perpendicular distance to polyline segments via Haversine projection.",
+        disclosure: "Demonstration stepping endpoint clearly labeled as simulated telemetry."
+    },
+    DEV: {
+        title: "500-Metre Deviation Detection",
+        category: "SAFETY GUARDRAIL",
+        role: "Detects when a vehicle strayed >500m away from its assigned route corridor.",
+        file: "backend/services/tracking_service.py",
+        input: "Vehicle coordinate (lat, lng) and assigned route polyline coordinates.",
+        output: "Deviation flag (True/False) and distance in metres.",
+        formula: "if min_dist_to_corridor(v, polyline) > 500.0 m -> TRIGGER_DEVIATION",
+        disclosure: "Essential for mountainous terrain where off-corridor travel indicates landslides or distress."
+    },
+    ALT: {
+        title: "Automated Multi-Hazard Alert Center",
+        category: "NOTIFICATION SERVICE",
+        role: "Compound SHA-256 deduplicated notification hub with cross-service triggers.",
+        file: "backend/services/alerts_service.py",
+        input: "Events from disruptions, verified incidents, or vehicle deviations.",
+        output: "Deduplicated alert entries in alerts.db and simulated channel broadcasts.",
+        formula: "SHA256(category + source + location + severity + 6_hour_window)",
+        disclosure: "Eliminates duplicate alert spam while guaranteeing zero missing critical safety notices."
+    },
+    CIT: {
+        title: "Citizen & Driver Field Reporting",
+        category: "CROWDSOURCING",
+        role: "Allows drivers and local citizens to submit geotagged road hazard reports with photos.",
+        file: "frontend/src/components/modals/FieldReportModal.tsx",
+        input: "Hazard type (landslide, flood, blockage), description, GPS, photo (≤ 5MB).",
+        output: "Submitted incident report starting with status 'pending'.",
+        formula: "Client photo validation: type in [image/jpeg, image/png], size <= 5,242,880 bytes",
+        disclosure: "Requires admin verification before modifying routing graph weights."
+    },
+    PEND: {
+        title: "Pending Incident Verification Queue",
+        category: "OPERATIONAL SERVICE",
+        role: "Holds unverified citizen reports until verified by an authorized officer.",
+        file: "backend/services/accessibility_service.py",
+        input: "Incident report submissions from field reporting modal.",
+        output: "Managed queue visible in AccessibilityMonitorPanel.",
+        formula: "Status lifecycle: pending -> verified | rejected | resolved",
+        disclosure: "Ensures crowdsourced reports cannot corrupt emergency routing without human-in-the-loop audit."
+    },
+    AUDIT: {
+        title: "Immutable Accessibility Audit Trail",
+        category: "GOVERNANCE",
+        role: "Records every change to road accessibility grades with actor, timestamp, and notes.",
+        file: "backend/services/accessibility_service.py",
+        input: "Incident status updates or corridor grade modifications.",
+        output: "Append-only entries in accessibility_audit_log table.",
+        formula: "Schema: log_id, timestamp_utc, actor, action, previous_state, new_state, rationale",
+        disclosure: "Guarantees accountability for disaster response logistics."
+    }
+};
+
+// =========================================================================
+// 3. PREFERENCE WEIGHT PROFILES
+// =========================================================================
+
+const PREFERENCE_WEIGHTS = {
+    balanced: [
+        { label: "Travel Time", pct: 30, color: "#3b82f6" },
+        { label: "Distance", pct: 25, color: "#06b6d4" },
+        { label: "Road Hierarchy", pct: 15, color: "#10b981" },
+        { label: "Weather Safety", pct: 15, color: "#f59e0b" },
+        { label: "Disruptions", pct: 10, color: "#f43f5e" },
+        { label: "Snap Quality", pct: 5, color: "#8b5cf6" }
+    ],
+    distance: [
+        { label: "Distance", pct: 50, color: "#06b6d4" },
+        { label: "Travel Time", pct: 15, color: "#3b82f6" },
+        { label: "Road Hierarchy", pct: 10, color: "#10b981" },
+        { label: "Weather Safety", pct: 10, color: "#f59e0b" },
+        { label: "Disruptions", pct: 10, color: "#f43f5e" },
+        { label: "Snap Quality", pct: 5, color: "#8b5cf6" }
+    ],
+    time: [
+        { label: "Travel Time", pct: 50, color: "#3b82f6" },
+        { label: "Distance", pct: 15, color: "#06b6d4" },
+        { label: "Road Hierarchy", pct: 15, color: "#10b981" },
+        { label: "Weather Safety", pct: 10, color: "#f59e0b" },
+        { label: "Disruptions", pct: 5, color: "#f43f5e" },
+        { label: "Snap Quality", pct: 5, color: "#8b5cf6" }
+    ],
+    accessibility: [
+        { label: "Road Hierarchy", pct: 30, color: "#10b981" },
+        { label: "Snap Quality", pct: 20, color: "#8b5cf6" },
+        { label: "Weather Safety", pct: 20, color: "#f59e0b" },
+        { label: "Disruptions", pct: 15, color: "#f43f5e" },
+        { label: "Travel Time", pct: 10, color: "#3b82f6" },
+        { label: "Distance", pct: 5, color: "#06b6d4" }
+    ]
+};
+
+// =========================================================================
+// 4. PIPELINE SIMULATION STAGES
+// =========================================================================
+
+const SIMULATION_STAGES = [
+    {
+        id: "UI",
+        label: "1. User Input & Endpoint Selection",
+        ticker: "[Frontend] User specifies Shillong HQ -> Sohra Hub (lat 25.5788, lng 91.8933).",
+        diag: "master"
+    },
+    {
+        id: "SNAP",
+        label: "2. Coordinate Snapping & Guardrails",
+        ticker: "[RouteEngine] Snapping origin to node 3428125750 (5.84m away <= 3000m limit).",
+        diag: "master"
+    },
+    {
+        id: "DIJK",
+        label: "3. Dijkstra Pathfinding",
+        ticker: "[GraphML] Computing Shortest (50.53km / 105min) and Fastest (52.88km / 82min) routes.",
+        diag: "master"
+    },
+    {
+        id: "WEATH",
+        label: "4. Environmental Data Enrichment",
+        ticker: "[Weather & Disruptions] Open-Meteo cache query: 18°C, 20% rain; checking Sonapur/Umiam advisories.",
+        diag: "master"
+    },
+    {
+        id: "SCOR",
+        label: "5. Explainable Multi-Criteria Scoring",
+        ticker: "[Scoring] Evaluated candidate scores: Distance 95.5, Time 91.2, Road Quality 88.0.",
+        diag: "master"
+    },
+    {
+        id: "ML",
+        label: "6. Pairwise ML Route Ranking",
+        ticker: "[ML Model] Pairwise Logistic Regression predicts Fastest corridor win probability P=0.74.",
+        diag: "master"
+    },
+    {
+        id: "DISP",
+        label: "7. Delivery Dispatch to Fleet",
+        ticker: "[Operations] Dispatching order #DEL-9041 to ML-05-TR-1042 (4x4 Relief Unit).",
+        diag: "master"
+    },
+    {
+        id: "TRK",
+        label: "8. Real-time Telemetry & Corridor Check",
+        ticker: "[Tracking] Telemetry ping: lat 25.4839, lng 91.8297, speed 35 km/h, bearing 215°.",
+        diag: "master"
+    },
+    {
+        id: "DEV",
+        label: "9. 500m Corridor Deviation Guardrail",
+        ticker: "[Safety Guardrail] Distance to polyline = 34.2m (well within 500m safety envelope).",
+        diag: "master"
+    },
+    {
+        id: "ALT",
+        label: "10. Multi-Hazard Alerts Center",
+        ticker: "[Alerts Hub] SHA-256 compound fingerprint evaluated; notification dispatched to driver.",
+        diag: "master"
+    }
+];
+
+// =========================================================================
+// 5. APPLICATION STATE & CONTROLLER
+// =========================================================================
+
+let currentView = "master";
+let currentSimStep = -1;
+let simInterval = null;
+let currentZoom = 1.0;
+
+// Initialize Mermaid
+mermaid.initialize({
+    startOnLoad: false,
+    theme: 'base',
+    securityLevel: 'loose',
+    flowchart: {
+        curve: 'basis',
+        htmlLabels: true,
+        nodeSpacing: 45,
+        rankSpacing: 55,
+        useMaxWidth: false
+    },
+    themeVariables: {
+        primaryColor: '#1e3a8a',
+        primaryTextColor: '#f8fafc',
+        primaryBorderColor: '#3b82f6',
+        lineColor: '#64748b',
+        secondaryColor: '#064e3b',
+        tertiaryColor: '#3b0764',
+        fontFamily: 'Inter, sans-serif'
+    }
+});
+
+// Render the active diagram
+async function renderDiagram(viewKey) {
+    currentView = viewKey;
+    const diag = DIAGRAMS[viewKey];
+    
+    document.getElementById("diagTitle").textContent = diag.title;
+    document.getElementById("diagSubtitle").textContent = diag.subtitle;
+
+    const target = document.getElementById("mermaidTarget");
+    target.removeAttribute("data-processed");
+    target.textContent = diag.code;
+
+    try {
+        await mermaid.run({ nodes: [target] });
+        attachNodeListeners();
+        resetZoom();
+    } catch (err) {
+        console.error("Mermaid render error:", err);
+    }
+}
+
+// Attach click listeners to diagram SVG nodes
+function attachNodeListeners() {
+    const nodes = document.querySelectorAll(".mermaid .node");
+    nodes.forEach(node => {
+        node.addEventListener("click", () => {
+            const rawId = node.id; // e.g. "flowchart-RE-42"
+            const match = rawId.match(/flowchart-([A-Za-z0-9_]+)-\d+/);
+            const nodeId = match ? match[1] : null;
+            if (nodeId && NODE_DETAILS[nodeId]) {
+                displayNodeDetails(nodeId);
+            }
+        });
+    });
+}
+
+// Display node details in the Inspector side panel
+function displayNodeDetails(nodeId) {
+    const info = NODE_DETAILS[nodeId];
+    if (!info) return;
+
+    document.getElementById("inspectorCategory").textContent = info.category;
+    
+    const container = document.getElementById("inspectorContent");
+    container.innerHTML = `
+        <div class="node-role-badge" style="background:rgba(59,130,246,0.15); color:#60a5fa;">${escapeHTML(info.category)}</div>
+        <h4 class="inspector-title">${escapeHTML(info.title)}</h4>
+        <p class="inspector-desc">${escapeHTML(info.role)}</p>
+
+        <div class="info-section">
+            <div class="info-section-title">📂 Implementation File</div>
+            <a href="file:///d:/AI%20and%20ML%20Project/${escapeHTML(info.file)}" class="file-link">
+                ${escapeHTML(info.file)}
+            </a>
+        </div>
+
+        <div class="info-section">
+            <div class="info-section-title">📥 Inputs & Data Contract</div>
+            <div class="code-snippet">${escapeHTML(info.input)}</div>
+        </div>
+
+        <div class="info-section">
+            <div class="info-section-title">📤 Outputs & Processing</div>
+            <div class="code-snippet">${escapeHTML(info.output)}</div>
+        </div>
+
+        <div class="info-section">
+            <div class="info-section-title">📐 Key Mathematical Concept / Formula</div>
+            <div class="formula-box">${escapeHTML(info.formula)}</div>
+        </div>
+
+        <div class="disclosure-note">
+            <strong>⚖️ Academic Integrity Disclosure:</strong><br>
+            ${escapeHTML(info.disclosure)}
+        </div>
+    `;
+
+    // Highlight node in diagram
+    document.querySelectorAll(".mermaid .node").forEach(n => n.style.opacity = "0.35");
+    const activeEl = document.querySelector(`.mermaid .node[id*='flowchart-${nodeId}-']`);
+    if (activeEl) {
+        activeEl.style.opacity = "1";
+    }
+}
+
+// Render Preference Weight Simulator
+function setPreference(prefKey) {
+    document.querySelectorAll(".pref-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.textContent.toLowerCase().includes(prefKey));
+    });
+
+    const weights = PREFERENCE_WEIGHTS[prefKey] || PREFERENCE_WEIGHTS.balanced;
+    const container = document.getElementById("weightBarsContainer");
+    container.innerHTML = weights.map(w => `
+        <div class="weight-row" style="flex-direction:column; align-items:stretch; margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; font-weight:600; font-size:12px;">
+                <span>${w.label}</span>
+                <span style="color:${w.color};">${w.pct}%</span>
+            </div>
+            <div class="weight-bar-bg">
+                <div class="weight-bar-fill" style="width:${w.pct}%; background:${w.color};"></div>
+            </div>
+        </div>
+    `).join("");
+}
+
+// =========================================================================
+// 6. ANIMATED PIPELINE SIMULATION CONTROLLER
+// =========================================================================
+
+function buildStepDots() {
+    const container = document.getElementById("stepDots");
+    container.innerHTML = SIMULATION_STAGES.map((s, idx) => `
+        <div class="step-dot" id="dot-${idx}" title="${s.label}"></div>
+    `).join("");
+}
+
+function applySimStep(stepIndex) {
+    currentSimStep = stepIndex;
+    const stage = SIMULATION_STAGES[stepIndex];
+    if (!stage) return;
+
+    // Switch view if needed
+    if (currentView !== stage.diag) {
+        renderDiagram(stage.diag);
+    }
+
+    // Update Dots
+    SIMULATION_STAGES.forEach((_, idx) => {
+        const dot = document.getElementById(`dot-${idx}`);
+        if (!dot) return;
+        dot.classList.remove("active", "completed");
+        if (idx === stepIndex) dot.classList.add("active");
+        else if (idx < stepIndex) dot.classList.add("completed");
+    });
+
+    // Update Label & Ticker
+    document.getElementById("stepLabel").textContent = stage.label;
+    document.getElementById("simTicker").textContent = stage.ticker;
+
+    // Highlight Node
+    document.querySelectorAll(".mermaid .node").forEach(n => {
+        n.classList.remove("node-sim-active");
+        n.style.opacity = "0.3";
+    });
+
+    const activeNode = document.querySelector(`.mermaid .node[id*='flowchart-${stage.id}-']`);
+    if (activeNode) {
+        activeNode.classList.add("node-sim-active");
+        activeNode.style.opacity = "1";
+    }
+
+    // Update Inspector side panel
+    if (NODE_DETAILS[stage.id]) {
+        displayNodeDetails(stage.id);
+    }
+}
+
+function stepSim(dir) {
+    let nextStep = currentSimStep + dir;
+    if (nextStep >= SIMULATION_STAGES.length) nextStep = 0;
+    if (nextStep < 0) nextStep = SIMULATION_STAGES.length - 1;
+    applySimStep(nextStep);
+}
+
+function toggleSim() {
+    const btn = document.getElementById("playSimBtn");
+    if (simInterval) {
+        clearInterval(simInterval);
+        simInterval = null;
+        btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg><span>Play Pipeline Animation</span>`;
+        btn.classList.remove("btn-primary");
+        btn.classList.add("btn-emerald");
+    } else {
+        if (currentSimStep === -1 || currentSimStep >= SIMULATION_STAGES.length - 1) {
+            applySimStep(0);
+        }
+        btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg><span>Pause Animation</span>`;
+        btn.classList.remove("btn-emerald");
+        btn.classList.add("btn-primary");
+        
+        simInterval = setInterval(() => {
+            if (currentSimStep >= SIMULATION_STAGES.length - 1) {
+                applySimStep(0);
+            } else {
+                applySimStep(currentSimStep + 1);
+            }
+        }, 2200);
+    }
+}
+
+function resetSim() {
+    if (simInterval) toggleSim();
+    currentSimStep = -1;
+    document.querySelectorAll(".step-dot").forEach(d => d.classList.remove("active", "completed"));
+    document.querySelectorAll(".mermaid .node").forEach(n => {
+        n.classList.remove("node-sim-active");
+        n.style.opacity = "1";
+    });
+    document.getElementById("stepLabel").textContent = "Idle (Click Play)";
+    document.getElementById("simTicker").textContent = "Simulation reset. Click Play to start animated walkthrough.";
+}
+
+// =========================================================================
+// 7. ZOOM, PAN & THEME CONTROLS
+// =========================================================================
+
+function zoom(dir) {
+    currentZoom = Math.min(2.0, Math.max(0.4, currentZoom + dir * 0.15));
+    document.getElementById("diagramWrapper").style.transform = `scale(${currentZoom})`;
+    document.getElementById("diagramWrapper").style.transformOrigin = "top center";
+}
+
+function resetZoom() {
+    currentZoom = 1.0;
+    document.getElementById("diagramWrapper").style.transform = "scale(1)";
+}
+
+function toggleTheme() {
+    document.body.classList.toggle("light");
+}
+
+function escapeHTML(str) {
+    return String(str).replace(/[&<>"']/g, c => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+    })[c]);
+}
+
+// =========================================================================
+// 8. EVENT LISTENERS & INITIAL BOOTSTRAP
+// =========================================================================
+
+document.querySelectorAll("#workflowTabs .tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll("#workflowTabs .tab-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const view = btn.dataset.view;
+        renderDiagram(view);
+    });
+});
+
+// Bootstrap
+window.addEventListener("DOMContentLoaded", () => {
+    buildStepDots();
+    setPreference("balanced");
+    renderDiagram("master");
+});
+</script>
+
+</body>
+</html>

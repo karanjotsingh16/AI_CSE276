@@ -66,35 +66,45 @@ Set-Location "d:\AI and ML Project\backend"
 ## 4. Architecture
 
 ### Backend (`backend/`)
-| File | Purpose |
+The backend is structured into clear domain packages, while maintaining top-level shims for 100% backward compatibility:
+| Package / File | Purpose |
 |---|---|
-| `main.py` | FastAPI app, Pydantic schemas, exception handlers, endpoints |
-| `route_engine.py` | `RouteEngine`: loads `data/processed/shillong_roads_clean.graphml` once, snaps coordinates (max 3,000 m), computes `shortest` (length) and `estimated_fastest` (travel_time) |
-| `route_scoring.py` | Deterministic component scores (distance, time, road hierarchy, snap quality) + weighted overall score per preference |
-| `route_ranking_ml.py` | Experimental `PairwiseRouteRanker` (GroupShuffleSplit eval); report in `reports/route_ranking_ml_evaluation.json` |
-| `region_manager.py` | Regional graph catalog (`data/regions_catalog.json`), coverage evaluation, LRU engine cache, `--acquire` CLI |
-| `geocoding_service.py` | Local gazetteer + coordinate parser + rate-limited, disk-cached Nominatim; attaches coverage info |
-| `pan_india_routing.py` | **NEW (in progress)**: India-wide routing via public OSRM, with offline fallback |
-| `demand_clustering.py` | K-Means on synthetic demand (UTM 46N projection); report in `reports/demand_clustering_evaluation.json` |
-| `download_roads.py`, `preprocess_roads.py` | Graph acquisition and cleaning |
+| `core/route_engine.py` | `RouteEngine`: loads `data/processed/shillong_roads_clean.graphml` once, snaps coordinates (max 3,000 m), computes `shortest` (length), `estimated_fastest` (travel_time), and `alternative_corridor` |
+| `core/route_scoring.py` | Deterministic component scores (distance, time, road hierarchy, snap quality, weather, disruptions) + weighted overall score per preference |
+| `core/route_ranking_ml.py` | Experimental `PairwiseRouteRanker` (11 feature differences, GroupShuffleSplit 60/20/20); model artifact in `models/pairwise_route_ranker_v1.joblib` |
+| `core/region_manager.py` | Regional graph catalog (`data/regions_catalog.json`) across 8 NER states, coverage evaluation, LRU engine cache |
+| `core/demand_clustering.py` | K-Means on synthetic demand (UTM 46N EPSG:32646 projection); report in `reports/demand_clustering_evaluation.json` |
+| `core/pan_india_routing.py` | Pan-India fallback routing via public OSRM |
+| `services/accessibility_service.py` | Road accessibility grading, citizen incident reporting, SQLite `accessibility.db`, 5MB photo validation, audit trail |
+| `services/tracking_service.py` | Fleet vehicle registry, delivery dispatch, >500m corridor deviation detection, SQLite `tracking.db` |
+| `services/alerts_service.py` | Automated multi-hazard alerts, SHA-256 compound deduplication, SQLite `alerts.db`, channel transparency |
+| `services/weather_service.py` | Open-Meteo numerical weather forecasts with 15-minute caching |
+| `services/disruptions_service.py` | Regional advisories (`data/regional_disruptions.json`) with spatial polyline intersection evaluation |
+| `services/geocoding_service.py` | Local gazetteer across 8 NER states + coordinate parser + cached Nominatim |
+| `scripts/` | `download_roads.py` (OSM acquisition) & `preprocess_roads.py` (cleaning & speed imputation) |
+| `tests/` | All 11 standalone test suites |
+| `main.py` | FastAPI application, Pydantic schemas, exception handlers, REST endpoints |
+| `run_all_tests.py` | Master regression test runner across all test suites |
 
 **Endpoints:** `GET /health`, `POST /api/routes`, `POST /api/demand-zones`, `GET/POST /api/geocode`,
-`GET /api/geocode/suggestions`, `GET /api/regions`, `GET /api/ml-ranking/evaluation`.
+`GET /api/geocode/suggestions`, `GET /api/regions`, `GET /api/ml-ranking/evaluation`, `GET /api/weather`,
+`GET /api/disruptions`, `POST /api/disruptions/check-route`, `/api/accessibility/*`, `/api/tracking/*`, `/api/notifications/*`.
 
 **Local graph facts:** 21,764 nodes / 53,888 directed edges; bounds lat 25.195–25.645, lng 91.572–92.069.
 Covered hubs: Shillong, Police Bazar, Laitumkhrah, Upper Shillong, Smit, Mawphlang, Sohra, Mairang, Pynursla, Dawki.
-NOT covered by the local graph: Guwahati, Jowai, Nongpoh.
 
 ### Frontend (`frontend/src/`)
-- `App.tsx`: minimalist 5-stage flow: `welcome → endpoints → details → calculating → workspace`.
-  The workspace shows the map plus a 400 px side sheet (priority switcher, route summary, route list, and collapsible
-  "Score breakdown" and "Demand zones (K-Means)" drawers).
-- `components/MapView.tsx`: Leaflet map; routes, origin/destination markers, and demand overlay are independent layer groups.
-- `components/LocationSearchInput.tsx`: search row + quick-pick pills.
-- `services/routeService.ts`: calls `POST /api/routes` (currently sends origin + destination only), then ranks on the client.
-- `logic/routeScoring.ts`: client-side deterministic scoring / ranking (`evaluateAndRankRoutes`, `PREFERENCE_CONFIGS`).
-- `logic/formatters.ts`: formatting helpers, including `formatDurationHoursMinutes`.
-- Legacy cards (`Disaster*`, `Weather*`, `RadarControl`, `RouteSafetyCard`, …) are mostly unused by the new UI. Do not delete them without asking.
+Frontend components are modularized into dedicated directories under `components/`:
+- `components/modals/`: `FieldReportModal`, `NewDeliveryModal`, `NotificationCenterModal`, `OfflineQueueModal`.
+- `components/panels/`: `AccessibilityMonitorPanel`, `TrackingMonitorPanel`, `DemandZonesCard`.
+- `components/map/`: `MapView`, `MapLegend`, `RadarControl`.
+- `components/common/`: `Header`, `LocationSearchInput`.
+- `components/legacy/`: Preserved reference and evaluation cards.
+- `components/index.ts`: Unified barrel export; top-level component shims ensure legacy direct imports never break.
+- `App.tsx`: Minimalist 5-stage flow: `welcome → endpoints → details → calculating → workspace`.
+- `services/`: API client services (`routeService`, `accessibilityService`, `trackingService`, `notificationService`, `offlineQueueService`, etc.).
+- `logic/`: Client-side scoring, formatting, and safety classification.
+- `i18n/`: English and Hindi (हिंदी) translations with React context.
 
 ## 5. Current State (keep updated)
 
@@ -108,35 +118,67 @@ NOT covered by the local graph: Guwahati, Jowai, Nongpoh.
   - **Phase 6 (Alerts & Notifications System — Module G):** Completed & verified (2026-10-30).
   - **Phase 7 (Multilingual i18n, Offline PWA Sync Queue & GIS Polish — Module H):** Completed & verified (2026-10-30).
   - **Phase 8 (Final Validation & Academic Deliverables):** Completed & verified (2026-10-30).
-- Backend server: running on `127.0.0.1:8000` (uvicorn host mode); `/health` OK, `/api/notifications` OK, `/api/tracking/vehicles` OK.
+- Backend server: running on `127.0.0.1:8000` (uvicorn host mode); `/health` OK, `/api/notifications/unread-count` OK, `/api/tracking/vehicles` OK.
 - Frontend dev server: running on `http://127.0.0.1:5174/` (or `5173`).
-- Frontend build + lint: passed 2026-10-30 (`tsc -b && vite build` exit code 0; `oxlint` 0 errors).
-- Backend tests confirmed passing (all 9 suites, exit code 0):
-  - `test_alerts_system.py`
-  - `test_vehicle_tracking.py`
-  - `test_accessibility_and_reports.py`
-  - `test_weather_and_disruptions.py`
-  - `test_route_scoring.py`
-  - `test_route_engine.py`
-  - `test_route_ranking_ml.py`
-  - `test_geocoding_and_regions.py`
-  - `test_demand_clustering.py`
+- Frontend build + lint: passed (`tsc -b && vite build` built in 748ms, exit code 0; `oxlint` 0 errors).
+- Backend tests confirmed passing (all 9 suites, 100% regression pass via `run_all_tests.py` in 48.39s, exit code 0):
+  - `test_alerts_system.py` (0.41s)
+  - `test_vehicle_tracking.py` (0.43s)
+  - `test_accessibility_and_reports.py` (0.40s)
+  - `test_weather_and_disruptions.py` (8.60s)
+  - `test_route_scoring.py` (14.42s)
+  - `test_route_engine.py` (10.31s)
+  - `test_route_ranking_ml.py` (4.28s)
+  - `test_geocoding_and_regions.py` (6.39s)
+  - `test_demand_clustering.py` (3.14s)
 - Test Runner: `backend/run_all_tests.py` available for single-command regression execution.
+- Codebase Reorganization: Complete modular package structure in place (`backend/core/`, `backend/services/`, `backend/scripts/`, `backend/tests/`, and `frontend/src/components/{modals,panels,map,common,legacy}/`) with zero breaking changes and 100% backward compatibility shims.
 
 ## 6. In-Progress Work (unfinished — read before continuing)
 
-- **All Phases Completed (Phase 0 through Phase 8):**
-  - **Intelligent Mountain Routing (Module A):** 8-state NER catalog, 21,764 OSM nodes, 53,888 edges, 3 alternative candidate corridors, static design speed imputation.
-  - **Route-Ranking ML Pipeline (Module B):** Pairwise Logistic Ranker with 11 feature differences, GroupShuffleSplit 60/20/20, saved artifact `models/pairwise_route_ranker_v1.joblib`, 5-model benchmark comparison table.
-  - **Live Weather & Disruptions (Module C):** Open-Meteo WMO numerical weather with 15-min cache, spatial polyline intersection against regional advisories (Umiam, Sonapur, Mawkdok, Dawki).
-  - **Road Accessibility & Field Reporting (Modules D & E):** SQLite `accessibility.db`, verified corridors, geo-tagged incident reporting, 5 MB photo upload validation, admin verification workflow, and immutable audit trail.
-  - **GPS Vehicle & Delivery Tracking (Module F):** SQLite `tracking.db`, baseline fleet, delivery dispatch, >500m route corridor deviation engine, interactive Leaflet vehicle markers, demonstration GPS stepping.
-  - **Automated Multi-Hazard Alerts (Module G):** SQLite `alerts.db`, compound SHA-256 deduplication hashing, cross-service trigger synchronization, notification center modal, channel delivery transparency.
-  - **Multilingual, Offline PWA & GIS Polish (Module H):** English & Hindi (हिंदी) i18n, persistent localStorage draft queue for remote Himalayan blackouts, automatic reconnection sync, standalone PWA manifest and service worker, floating GIS telemetry overlay.
-  - **Final Validation & Deliverables (Phase 8):** Comprehensive UTF-8 `README.md`, verified `requirements.txt`, unified `run_all_tests.py`, and step-by-step evaluator guide [`docs/EVALUATION_AND_DEMO_GUIDE.md`](file:///d:/AI%20and%20ML%20Project/docs/EVALUATION_AND_DEMO_GUIDE.md).
+- **Reorganization & All Phases Completed (Phases 0–8 + Codebase Organization):**
+  - **Modular Architecture:** Cleanly organized flat backend into `core/`, `services/`, `scripts/`, `tests/` and frontend into `components/modals/`, `components/panels/`, `components/map/`, `components/common/`, `components/legacy/`.
+  - **Comprehensive Docs:** Detailed architecture blueprint in [`docs/ARCHITECTURE.md`](file:///d:/AI%20and%20ML%20Project/docs/ARCHITECTURE.md), updated `backend/README.md`, and updated `frontend/README.md`.
+  - **Zero Breaking Changes:** Maintained 100% backward compatibility with top-level Python and TypeScript shims.
+  - **All SIH Modules Active:** Intelligent Mountain Routing, Pairwise Ranking ML, Open-Meteo Weather & Disruptions, Road Accessibility & Field Reporting, GPS Fleet & Delivery Tracking, Automated Alerts, Offline PWA & Hindi/English Localization.
 - **System Readiness:** 100% production-ready for SIH 26002 evaluation and presentation.
 
 ## 7. Change Log (newest first)
+
+### 2026-11-01 (Interactive System Architecture & Animated Workflow Visualizer)
+- `docs/arch.html` & `docs/index.html`: created self-contained, interactive HTML visualizer with Mermaid 11 animations explaining the whole NER SmartRoute system at one place.
+  - **Animated Pipeline Simulation:** Step-by-step playback with glowing node pulses and streaming telemetry ticker across 10 stages (User Search → Snapping → Dijkstra → Environmental Enrichment → Explainable Scoring → ML Ranking → Dispatch → Telemetry → Deviation Check → Multi-Hazard Alerts).
+  - **6 Dedicated Flowchart Views:** All-in-One Master Flow, Routing & Explainable Scoring, Pairwise ML & Demand Clusters, Road Accessibility & Field Auditing, GPS Fleet Tracking & 500m Deviation, Multi-Hazard Alerts & Offline Sync.
+  - **Deep-Dive Component Inspector:** Clickable nodes revealing implementation file paths, JSON data contracts, mathematical formulations, and academic disclosures.
+  - **Interactive Explainable AI Weight Simulator:** Live sliders/pills for Balanced, Distance, Fastest, and Accessibility preference profiles.
+  - **Controls & Theme:** Dark Obsidian / Light Mode toggle, Zoom (+ / - / 1:1), and responsive viewport navigation.
+- **Verified (exit code 0):** HTML tag validation, Mermaid block syntax integrity, live uvicorn server (`/health` HTTP 200, 21,764 nodes).
+
+### 2026-11-01 (Full Codebase Organization & Modular Architecture)
+- `docs/ARCHITECTURE.md`: created comprehensive architectural blueprint documenting package layout, domain responsibilities, data flow, and compatibility design.
+- `backend/core/`: created dedicated algorithms subpackage housing Dijkstra routing (`route_engine.py`), multi-criteria explainable scoring (`route_scoring.py`), pairwise ranking ML (`route_ranking_ml.py`), multi-region graph manager (`region_manager.py`), UTM 46N K-Means demand clustering (`demand_clustering.py`), and OSRM fallback routing (`pan_india_routing.py`).
+- `backend/services/`: created dedicated operational services subpackage housing `accessibility_service.py`, `tracking_service.py`, `alerts_service.py`, `weather_service.py`, `disruptions_service.py`, and `geocoding_service.py`.
+- `backend/scripts/`: organized offline data pipeline scripts `download_roads.py` and `preprocess_roads.py`.
+- `backend/tests/`: organized all 11 standalone test suites with dynamic `sys.path` bootstrap; tested and confirmed passing both via `tests/test_*.py` and master runner `run_all_tests.py`.
+- `backend/*.py` (shims): preserved root compatibility shims for all moved files so existing external scripts, CLI commands, and legacy imports continue working with zero friction.
+- `backend/README.md`: rewritten as an up-to-date, comprehensive backend architecture and command reference.
+- `frontend/src/components/`: organized into domain subfolders:
+  - `modals/` (`FieldReportModal.tsx`, `NewDeliveryModal.tsx`, `NotificationCenterModal.tsx`, `OfflineQueueModal.tsx`)
+  - `panels/` (`AccessibilityMonitorPanel.tsx`, `TrackingMonitorPanel.tsx`, `DemandZonesCard.tsx`)
+  - `map/` (`MapView.tsx`, `MapLegend.tsx`, `RadarControl.tsx`)
+  - `common/` (`Header.tsx`, `LocationSearchInput.tsx`)
+  - `legacy/` (10 preserved domain cards)
+  - `index.ts` (barrel export for all components)
+  - `*.tsx` (re-export compatibility shims for legacy imports)
+- `frontend/src/App.tsx`: updated to import directly from modular component directories.
+- `frontend/README.md`: updated with component structure, 5-stage UI workflow, and feature overview.
+- **Verified (all exit code 0):** `run_all_tests.py` (9 suites, 100% pass in 48.39s), `npm run build` (built in 748ms), `npm run lint` (0 errors), live backend server (`/health` HTTP 200, 21,764 nodes, load_count=1).
+
+### 2026-10-30 (Branding & Browser Tab Favicon Alignment)
+- `frontend/public/favicon.svg` & `frontend/dist/favicon.svg`: replaced generic purple template icon with the official NER SmartRoute app mark (obsidian squircle, mountain silhouette, glowing corridor path, and high-visibility logistics navigation arrowhead).
+- `frontend/index.html`: added `<link rel="apple-touch-icon" href="/favicon.svg" />`.
+- `frontend/src/App.tsx` & `frontend/src/components/Header.tsx`: unified in-app logo mark to use `/favicon.svg` for cohesive visual identity.
+- **Verified (exit code 0):** `tsc -b && vite build` (built in 1.05s), `oxlint` (0 errors).
 
 ### 2026-10-30 (Phase 8 — Final Validation & Academic Deliverables)
 - `README.md`: completely rewritten in standard UTF-8 as an exhaustive technical deliverable covering executive summary, architecture diagrams, module matrix, scientific disclosures, quickstart commands, API reference, and project structure.

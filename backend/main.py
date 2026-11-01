@@ -1,5 +1,15 @@
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Ensure subpackages (core, services, scripts, tests) are directly accessible to imports
+_BACKEND_DIR = Path(__file__).resolve().parent
+for _subdir in ["core", "services", "scripts", "tests"]:
+    _subpath = str(_BACKEND_DIR / _subdir)
+    if _subpath not in sys.path:
+        sys.path.insert(0, _subpath)
+
 import base64
 from contextlib import asynccontextmanager
 from functools import lru_cache

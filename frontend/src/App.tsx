@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { MapView } from './components/MapView';
-import { LocationSearchInput } from './components/LocationSearchInput';
+import { MapView } from './components/map/MapView';
+import { LocationSearchInput } from './components/common/LocationSearchInput';
 
 import {
   NER_LOCATIONS,
@@ -32,20 +32,20 @@ import {
   fetchRoadSegments,
   fetchIncidents,
 } from './services/accessibilityService';
-import { FieldReportModal } from './components/FieldReportModal';
-import { AccessibilityMonitorPanel } from './components/AccessibilityMonitorPanel';
+import { FieldReportModal } from './components/modals/FieldReportModal';
+import { AccessibilityMonitorPanel } from './components/panels/AccessibilityMonitorPanel';
 import { Vehicle, Delivery } from './types/tracking';
 import {
   fetchVehicles,
   fetchDeliveries,
 } from './services/trackingService';
-import { TrackingMonitorPanel } from './components/TrackingMonitorPanel';
-import { NewDeliveryModal } from './components/NewDeliveryModal';
+import { TrackingMonitorPanel } from './components/panels/TrackingMonitorPanel';
+import { NewDeliveryModal } from './components/modals/NewDeliveryModal';
 import { fetchUnreadCount } from './services/notificationService';
-import { NotificationCenterModal } from './components/NotificationCenterModal';
+import { NotificationCenterModal } from './components/modals/NotificationCenterModal';
 import { useTranslation } from './i18n';
 import { subscribeToOfflineQueue } from './services/offlineQueueService';
-import { OfflineQueueModal } from './components/OfflineQueueModal';
+import { OfflineQueueModal } from './components/modals/OfflineQueueModal';
 
 import {
   calculateRouteAlternatives,
@@ -67,7 +67,6 @@ import {
 import { fetchGovernmentDisasterAlerts } from './services/alertService';
 
 import {
-  Navigation,
   ArrowRight,
   ArrowLeft,
   ArrowUpDown,
@@ -473,8 +472,8 @@ export function App() {
         {/* Top Wordmark */}
         <header className="max-w-5xl w-full mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-white text-zinc-950 flex items-center justify-center">
-              <Navigation className="w-3.5 h-3.5" />
+            <div className="w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center">
+              <img src="/favicon.svg" alt="NER SmartRoute" className="w-7 h-7 object-contain" />
             </div>
             <span className="text-sm font-semibold tracking-tight text-white">
               {t.brandTitle}

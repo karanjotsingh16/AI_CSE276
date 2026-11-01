@@ -36,7 +36,11 @@ TEST_SUITES = [
 
 
 def run_suite(filename: str, description: str) -> tuple[bool, float, str]:
-    suite_path = BASE_DIR / filename
+    suite_path = (
+        BASE_DIR / "tests" / filename
+        if (BASE_DIR / "tests" / filename).exists()
+        else BASE_DIR / filename
+    )
     if not suite_path.exists():
         return False, 0.0, f"File not found: {filename}"
 
