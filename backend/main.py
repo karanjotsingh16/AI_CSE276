@@ -67,6 +67,7 @@ VITE_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5174",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://ai-cse-276-git-main-easedevelopers-projects.vercel.app",
 ]
 LOCAL_ORIGIN_REGEX = r"^https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$"
 
